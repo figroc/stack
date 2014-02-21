@@ -1,0 +1,292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xml:lang="en" xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+  <title>PerfMonitor</title>
+</head>
+<body>
+  <script type='text/javascript' src='http://code.jquery.com/jquery-1.8.2.js'></script>
+  <script type='text/javascript' src="http://code.highcharts.com/stock/highstock.js"></script>
+  <script type='text/javascript' src="http://code.highcharts.com/stock/modules/exporting.js"></script>
+
+<script type='text/javascript'>//<![CDATA[ 
+
+var _perf_monitor = [];
+var _perf_chart;
+var _updating = false;
+
+function initData() {
+  var data = [], time = (new Date()).getTime();
+  for (var i = - 60 * 60; i <= 0; ++i) 
+    data.push([time + i * 1000,	0.0]);
+  return data;
+}
+
+function findPerf(name) {
+  for (var i = _perf_monitor.length - 1; i >= 0; --i)
+    if (_perf_monitor[i].n == name)
+      return i;
+  return -1;
+}
+
+function addPerf(name) {
+  if (findPerf(name) < 0) {
+    _updating = true;
+    _perf_monitor.push({ n: name, c: [] });
+    _updating = false;
+  }
+}
+
+function removePerf(name) {
+  var p = findPerf(name);
+  if (p >= 0) {
+    var perf = _perf_monitor[p];
+    _updating = true;
+    for (var i = perf.c.length - 1; i >= 0; --i) 
+      _perf_chart.series[perf.c[i].i].remove();
+    _perf_monitor.splice(p, 1);
+    _updating = false;
+  }
+}
+
+function sumPerfData(data, type) {
+  var y = 0.0, nan = true;
+  for (var i = data.l.length - 1; i >= 0; --i) {
+    var n = data.l[i][type];
+    if (!isNaN(n)) { 
+      nan = false;
+      y += n;
+    }
+  }
+  return nan ? Number.NaN : y;
+}
+
+function showPerfData(data, perf, x, type) {
+  var y = sumPerfData(data, type);
+  if (!isNaN(y)) {
+    var csi = -1;
+    for (var i = perf.c.length - 1; i >= 0; --i) 
+      if (perf.c[i].t == type) {
+        csi = perf.c[i].i;
+        break;
+      }
+    if (csi < 0) {
+      csi = _perf_chart.series.length;
+      perf.c.push({ t: type, i: csi });
+      _perf_chart.addSeries({ name: perf.n + '`' + type, data: initData() });
+    }
+    _perf_chart.series[csi].addPoint([x, y], true, true);
+  }
+}
+
+function setDataSeries(data, perf) {
+  var x = (new Date()).getTime();
+  showPerfData(data, perf, x, 'c');
+  showPerfData(data, perf, x, 'i');
+  showPerfData(data, perf, x, 'd');
+  showPerfData(data, perf, x, 't');
+}
+
+function showDataSeries(perf) {
+  return function(data) { if (_updating == false) setDataSeries(data, perf); };
+}
+
+function showDataSeriesForTest(perf) {
+  var rd = function(ratio) { return Math.round(Math.random() * 100 * ratio); };
+  switch (perf.n) {
+  case 'inc^only': setDataSeries({r:200,l:[
+      {n:perf.n,c:rd(300),i:rd(100)}, 
+      {n:perf.n,c:rd(300),i:rd(100)} 
+    ]}, perf); break;
+  case 'dec^only': setDataSeries({r:200,l:[
+      {n:perf.n,c:rd(300),d:-rd(100)}, 
+      {n:perf.n,c:rd(300),d:-rd(100)} 
+    ]}, perf); break;
+  case 'time^only': setDataSeries({r:200,l:[
+      {n:perf.n,t:rd(10)}, 
+      {n:perf.n,t:rd(10)} 
+    ]}, perf); break;
+  case 'inc^dec': setDataSeries({r:200,l:[
+      {n:perf.n,c:rd(50),i:rd(100),d:-rd(100)}, 
+      {n:perf.n,c:rd(50),i:rd(100),d:-rd(100)}, 
+    ]}, perf); break;
+  default:        setDataSeries({r:200,l:[
+      {n:perf.n,c:rd(50),i:rd(100),d:-rd(100),t:rd(10)}, 
+      {n:perf.n,c:rd(50),i:rd(100),d:-rd(100),t:rd(10)}, 
+    ]}, perf); break;
+  }
+}
+
+function loadDataSeries() {
+  _perf_chart.series[0].addPoint([(new Date()).getTime(), 0.0], true, true);
+  if (_updating == false ) {
+    for (var i = _perf_monitor.length - 1; i >= 0; --i) {
+      var perf = _perf_monitor[i];
+      $.getJSON('http://' + _perf_svr.value + '/perf/query.do?' + escape(perf.n), showDataSeries(perf));
+      //showDataSeriesForTest(perf);
+    }
+  }
+}
+
+function setPerfList(data) {
+  if (data.r != 200) {
+    _error_tip.textContent = data.r; 
+  } else {
+    _error_tip.textContent = '';
+    _perf_list.options.length = 0;
+    for (var i = 0, l = data.l.length; i < l; ++i) {
+      var opt = document.createElement("option");
+      opt.text = data.l[i].n;
+      _perf_list.add(opt);
+      for (var j = _perf_watch.options.length - 1; j >= 0; --j) {
+      	if (opt.text == _perf_watch.options[j].text)
+      	  opt.disabled = true;
+      }
+    }
+  }
+}
+
+function loadPerfList() {
+  _error_tip.textContent = 'loading...';
+  $.getJSON('http://' + _perf_svr.value + '/perf/list.do?' + escape(_perf_query.value), setPerfList)
+   .fail(function(jqxhr, status, error) { _error_tip.textContent = status + ': ' + error; });
+  //setPerfList({r:200,l:[{n:'inc^only'},{n:'dec^only'},{n:'time^only'},{n:'inc^dec'},{n:'all'}]});
+}
+
+function addPerfToWatch() {
+  for (var i = 0, l = _perf_list.options.length; i < l; ++i) {
+    if (_perf_list.options[i].selected) {
+      var opt = document.createElement('option');
+      opt.text = _perf_list.options[i].text;
+      _perf_watch.add(opt);
+      _perf_list.options[i].selected = false;
+      _perf_list.options[i].disabled = true;
+      addPerf(opt.text);
+    }
+  }
+}
+
+function removePerfFromWatch() {
+  for (var i = _perf_watch.options.length - 1; i >= 0; --i) {
+    if (_perf_watch.options[i].selected) {
+      var opt = _perf_watch.options[i].text;
+      _perf_watch.remove(i);
+      for (var j = _perf_list.options.length - 1; j >= 0; --j) {
+        if (_perf_list.options[j].text == opt) {
+          _perf_list.options[j].disabled = false;
+        } 
+      }
+      removePerf(opt);
+    }
+  }
+}
+
+function manualWatch() {
+  for (var i = _perf_watch.options.length - 1; i >= 0; --i) {
+    if (_perf_watch.options[i].text == _perf_manual.value)
+      return;
+  }
+  var opt = document.createElement('option');
+  opt.text = _perf_manual.value;
+  _perf_watch.add(opt);
+  for (var i = _perf_list.options.length - 1; i >= 0; --i) {
+    if (_perf_list.options[i].text == _perf_manual.value) {
+      _perf_list.options[i].selected = false;
+      _perf_list.options[i].disabled = true;
+    }
+  }
+  addPerf(opt.text);
+}
+
+$(function() {
+	Highcharts.setOptions({
+		global : {
+			useUTC : false
+		}
+	});
+	$('#container').highcharts('StockChart', {
+		chart : {
+			events : {
+				load : function() {
+					_perf_chart = this;
+					setInterval(loadDataSeries, 3000);
+				}
+			}
+		},
+		
+		legend: {
+			enabled: true
+		},
+		
+		rangeSelector: {
+			buttons: [{
+				count: 5,
+				type: 'minute',
+				text: '5m'
+			}, {
+				count: 15,
+				type: 'minute',
+				text: '15m'
+			}, {
+				count: 30,
+				type: 'minute',
+				text: '30m'
+			}, {
+				type: 'all',
+				text: 'All'
+			}],
+			inputEnabled: false,
+			selected: 0
+		},
+		
+		exporting: {
+			enabled: false
+		},
+		
+		series: [{
+			name: '_time_', 
+			data: initData(), 
+			lineWidth: 0, 
+			marker: {
+				enabled: true, 
+				radius: 1
+			} 
+		}]
+	});
+});
+//]]>  
+</script>
+
+  <div id="container" style="height: 500px"></div>
+  
+  <div>
+    <div>
+      <label style="display:inline-block;width:65px">Server:</label>
+      <input id="_perf_svr" type="text" value="127.0.0.1:12321" size="110"></input>
+    </div>
+    <div>
+      <label style="display:inline-block;width:65px">PerfName:</label>
+      <input id="_perf_query" type="text"></input>
+      <button type="button" onclick="loadPerfList()">Query</button>
+      <label>&nbsp;&nbsp;&nbsp;</label>
+      <label id="_error_tip" style="display:inline-block;width:167px;color:red"></label>
+      <input id="_perf_manual" type="text"></input>
+      <button type="button" onclick="manualWatch()">Watch</button>
+    </div>
+    
+    <div style="display:inline-flex">
+      <div>
+        <select id="_perf_list" multiple="true" size="10" style="width:300px"></select>
+      </div>
+      <div style="margin: auto 5px">
+      	<button type="button" onclick="addPerfToWatch()">Watch &gt;&gt;</button>
+        <button type="button" onclick="removePerfFromWatch()">&lt;&lt; Remove</button>
+      </div>
+      <div>
+        <select id="_perf_watch" multiple="true" size="10" style="width:300px"></select>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
