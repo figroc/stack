@@ -3,13 +3,12 @@
 namespace msvc { namespace util {
 
 using namespace std;
-using namespace boost;
 
 template<>
 vector<string> StringSplit<string>(const string &str, const string &del, const bool cpt)
 {
     vector<string> val;
-    split(val, str, is_any_of(del), cpt ? token_compress_on : token_compress_off);
+    boost::split(val, str, boost::is_any_of(del), cpt ? boost::token_compress_on : boost::token_compress_off);
     return val;
 }
 
@@ -18,12 +17,11 @@ vector<string> StringSplit<string>(const string &str, const string &del, const b
 namespace msvc { namespace util { namespace _di {
 
 using namespace std;
-using namespace boost;
 
 template<>
 bool StringCast<bool>(const string &str, bool &val)
 {
-	string lower = str; to_lower(lower);
+	string lower = str; boost::to_lower(lower);
 	if (lower == "true" || lower == "on" || lower == "enable") {
 		val = true; return true;
 	}

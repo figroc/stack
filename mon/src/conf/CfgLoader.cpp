@@ -8,16 +8,15 @@
 namespace msvc { namespace cfg {
 
 using namespace std;
-using namespace boost;
 
-atomic_bool CfgLoader::_init(false);
-mutex CfgLoader::_lock;
-map< string, shared_ptr<Conf> > CfgLoader::_conf;
+boost::atomic_bool CfgLoader::_init(false);
+boost::mutex CfgLoader::_lock;
+map< string, boost::shared_ptr<Conf> > CfgLoader::_conf;
 
 void CfgLoader::Init(const SvcRole &role)
 {
 	if (!_init.exchange(true)) {
-		thread(FileWatcher).detach();
+		boost::thread(FileWatcher).detach();
 		SvcLocator::Init();
 		SvcSetting::Init(role);
 	}
@@ -25,11 +24,11 @@ void CfgLoader::Init(const SvcRole &role)
 
 Conf *CfgLoader::GetConf(const string &name)
 {
-	mutex::scoped_lock lock(_lock);
-	map< string, shared_ptr<Conf> >::iterator
+	boost::mutex::scoped_lock lock(_lock);
+	map< string, boost::shared_ptr<Conf> >::iterator
 		it = _conf.find(name);
 	if (_conf.end() == it) {
-		shared_ptr<Conf> conf(CreateConf(name));
+		boost::shared_ptr<Conf> conf(CreateConf(name));
 		it = _conf.insert(make_pair(name, conf)).first;
 	}
 	return it->second.get();
@@ -38,29 +37,29 @@ Conf *CfgLoader::GetConf(const string &name)
 void CfgLoader::FileWatcher()
 {
 #ifdef LOCAL_DEBUG
-	static const chrono::seconds interval(5);
+	static const boost::chrono::seconds interval(5);
 #else
-	static const chrono::minutes interval(5);
+	static const boost::chrono::minutes interval(5);
 #endif
 	while (true) try {
-		this_thread::sleep_for(interval);
+		boost::this_thread::sleep_for(interval);
 		{
-			mutex::scoped_lock lock(_lock);
-			for (map< string, shared_ptr<Conf> >::iterator
+			boost::mutex::scoped_lock lock(_lock);
+			for (map< string, boost::shared_ptr<Conf> >::iterator
 				it = _conf.begin(); it != _conf.end(); ++it) try {
-				const shared_ptr<Conf> &conf = it->second;
+				const boost::shared_ptr<Conf> &conf = it->second;
 				const time_t filetime = GetFileTime(conf->GetFilename());
 				if (conf->IsChanged(filetime)) {
 					auto_ptr<conf_value_map>
 						property = LoadFromFile(conf->GetFilename());
 					conf->Update(property, filetime);
 				}
-			} catch (const std::exception &ex) {
+			} catch (const exception &ex) {
 				cerr << "[ConfLoader::FileWatcher] " << it->first
 				     << ": " << ex.what() << endl;
 			}
 		}
-	} catch (const std::exception &ex) {
+	} catch (const exception &ex) {
 		cerr << "[ConfLoader::FileWatcher]: " << ex.what() << endl;
 	} catch (...) {
 		cerr << "[ConfLoader::FileWatcher] DEATH!" << endl;
@@ -79,7 +78,7 @@ time_t CfgLoader::GetFileTime(const string &name)
 		struct stat buf;
 		::stat(name.c_str(), &buf);
 		return buf.st_mtime;
-	} catch (const std::exception &ex) {
+	} catch (const exception &ex) {
 		cerr << "[ConfLoader::GetFileTime] exception for " << name
 		     << ": " << ex.what() << endl;
 	}
@@ -96,10 +95,10 @@ auto_ptr<Conf> CfgLoader::CreateConf(const string &name)
 
 auto_ptr<conf_value_map> CfgLoader::LoadFromFile(const string &name)
 {
-	static const program_options::options_description NO_OPT_DES;
+	static const boost::program_options::options_description NO_OPT_DES;
 	try {
-		program_options::basic_parsed_options<char>
-			opts = program_options::parse_config_file<char>(name.c_str(), NO_OPT_DES, true);
+		boost::program_options::basic_parsed_options<char>
+			opts = boost::program_options::parse_config_file<char>(name.c_str(), NO_OPT_DES, true);
 		auto_ptr<conf_value_map> conf(new conf_value_map());
 		for (int i = 0; i < opts.options.size(); ++i) {
 			conf_value_map::iterator it = conf->find(opts.options[i].string_key);
@@ -136,7 +135,7 @@ auto_ptr<conf_value_map> CfgLoader::LoadFromFile(const string &name)
 			}
 		}
 		return conf;
-	} catch (const std::exception &ex) {
+	} catch (const exception &ex) {
 		cerr << "[ConfLoader::LoadFromFile] " << name
 		     << ": " << ex.what() << endl;
 	}

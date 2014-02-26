@@ -7,7 +7,7 @@ project(mon)
 set(MON_VERSION_MAJOR 1)
 set(MON_VERSION_MINOR 0)
 
-set(MON_BUILD_FLAGS "-fPIC -lrt -lpthread -lz")
+set(MON_BUILD_FLAGS "-fPIC")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MON_BUILD_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MON_BUILD_FLAGS}")
@@ -18,6 +18,7 @@ configure_file (
 )
 include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_BINARY_DIR}")
+link_directories(/usr/local/lib)
 
 add_library(util OBJECT
   "src/util/String.cpp"
@@ -44,7 +45,7 @@ add_library(trace OBJECT
   "src/trace/TraceFacet.cpp"
 )
 
-add_library(msvc STATIC
+add_library(msvc SHARED
   "src/mon.cpp"
   $<TARGET_OBJECTS:util>
   $<TARGET_OBJECTS:conf>
@@ -53,11 +54,12 @@ add_library(msvc STATIC
 )
 
 target_link_libraries(msvc
-  libboost_system.a
-  libboost_thread.a
-  libboost_program_options.a
-  libcppnetlib-uri.a
-  libcppnetlib-server-parsers.a
+  boost_system
+  boost_chrono
+  boost_thread
+  boost_program_options
+  cppnetlib-uri
+  cppnetlib-server-parsers
 )
 
 add_library(util_test OBJECT
@@ -78,6 +80,6 @@ add_executable(msvc_test
 
 target_link_libraries(msvc_test
   msvc 
-  libboost_unit_test_framework.a
+  boost_unit_test_framework
 )
 

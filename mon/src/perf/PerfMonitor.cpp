@@ -8,20 +8,19 @@
 namespace msvc { namespace perf {
 
 using namespace std;
-using namespace boost;
 using namespace msvc::util;
 namespace netu = boost::network::uri;
 namespace http = boost::network::http;
 namespace util = boost::network::utils;
 
-atomic_bool PerfMonitor::_init(false);
-shared_ptr<PerfMonitor> PerfMonitor::_monitor;
-shared_ptr<PerfMonitor::HttpOption> PerfMonitor::_option;
-shared_ptr<PerfMonitor::HttpServer> PerfMonitor::_server;
+boost::atomic_bool PerfMonitor::_init(false);
+boost::shared_ptr<PerfMonitor> PerfMonitor::_monitor;
+boost::shared_ptr<PerfMonitor::HttpOption> PerfMonitor::_option;
+boost::shared_ptr<PerfMonitor::HttpServer> PerfMonitor::_server;
 
 void PerfMonitor::Start(const string &endpoint)
 {
-	if (!endpoint.empty() && !_init.exchange(true, memory_order_relaxed)) {
+	if (!endpoint.empty() && !_init.exchange(true, boost::memory_order_relaxed)) {
 		const pair<string, string> listening = ParseEndpoint(endpoint);
 		_monitor.reset(new PerfMonitor());
 		_option.reset(new HttpOption(*_monitor));
@@ -29,13 +28,13 @@ void PerfMonitor::Start(const string &endpoint)
 		_option->port(listening.second);
 		_server.reset(new HttpServer(*_option));
 		_server->listen();
-		thread(boost::bind(&HttpServer::run, _server)).detach();
+		boost::thread(boost::bind(&HttpServer::run, _server)).detach();
 	}
 }
 
 void PerfMonitor::Stop()
 {
-	if (_init.exchange(false, memory_order_relaxed)) {
+	if (_init.exchange(false, boost::memory_order_relaxed)) {
 		_server->stop();
 	}
 }
@@ -53,7 +52,7 @@ void PerfMonitor::SendResponse(HttpResponse &response, const string &content)
 	static const HttpResponse::header_type MIME_JSON = {"Content-Type", "application/json"};
 	static const HttpResponse::header_type NO_CACHE = {"Cache-Control", "no-store"};
 	static const HttpResponse::header_type ALLOW_ORIGIN = {"Access-Control-Allow-Origin", "*"};
-	const HttpResponse::header_type length = {"Content-Length", lexical_cast<string>(content.size())};
+	const HttpResponse::header_type length = {"Content-Length", boost::lexical_cast<string>(content.size())};
 
 	response.status = HttpResponse::ok;
 	response.content = content;

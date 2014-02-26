@@ -27,12 +27,6 @@ bool StringCast<bool>(const std::string &str, bool &val);
 namespace msvc { namespace util {
 
 template<typename T>
-T StringCast(const std::string &str, const T def = T())
-{
-	T r = def; StringCastTry(str, r); return r;
-}
-
-template<typename T>
 bool StringCastTry(const std::string &str, T &val)
 {
 	if (str.empty())
@@ -44,6 +38,12 @@ bool StringCastTry(const std::string &str, T &val)
 		return false;
 	}
 	return true;
+}
+
+template<typename T>
+T StringCast(const std::string &str, const T def = T())
+{
+	T r = def; StringCastTry(str, r); return r;
 }
 
 template<typename T>

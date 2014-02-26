@@ -26,7 +26,7 @@ private:
 	typedef boost::atomic_intmax_t atomic_count_t;
 	typedef std::pair<boost::atomic_uintmax_t, boost::atomic_uintmax_t> atomic_rate_t;
 	typedef std::pair<boost::atomic_uintmax_t, boost::atomic_uintmax_t> atomic_avg_t;
-	typedef Atomic<boost::uintmax_t>::opr atomic_op_f;
+	typedef Atomic<uintmax_t>::opr atomic_op_f;
 
 	static const size_t RATE_DURATION = 5;
 	static const atomic_op_f SET_ADD[];

@@ -9,7 +9,6 @@
 namespace msvc { namespace cfg {
 
 using namespace std;
-using namespace boost;
 using namespace msvc::util;
 
 SvcRole SvcSetting::_role;
@@ -53,7 +52,7 @@ string SvcSetting::UriAux(const string &name)
 	string uri = String(name);
 	if (!uri.empty() && (uri[0] == '+' || uri[0] == '-')) {
 		try {
-			int port = lexical_cast<int>(uri);
+			int port = boost::lexical_cast<int>(uri);
 			string base = UriSvc(_role);
 			if (base.size() < 1) {
 				cerr << "no base SvcRole defined for " << name << '(' << uri << ')' << endl;
@@ -61,15 +60,15 @@ string SvcSetting::UriAux(const string &name)
 			} else {
 				pair<string, string> endpoint = ParseEndpoint(base);
 				try {
-					port += lexical_cast<int>(endpoint.second);
-					uri = ComposeEndpoint(endpoint.first, lexical_cast<string>(port));
-				} catch (const bad_lexical_cast &ex) {
+					port += boost::lexical_cast<int>(endpoint.second);
+					uri = ComposeEndpoint(endpoint.first, boost::lexical_cast<string>(port));
+				} catch (const boost::bad_lexical_cast &ex) {
 					cerr << "invalid base SvcRole uri " << base << ": "
 					     << ex.what() << endl;
 					uri.clear();
 				}
 			}
-		} catch (const bad_lexical_cast &ex) {
+		} catch (const boost::bad_lexical_cast &ex) {
 			cerr << "invalid UriAux for " << name << '(' << uri << "): "
 			     << ex.what() << endl;
 			uri.clear();

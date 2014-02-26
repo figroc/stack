@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(LocateRRTest)
 	for (int i = 0; i < 5; ++i) {
 		BOOST_CHECK_EQUAL(
 				SvcLocator::GetUri(RoleSvc::PFS, _USR_[i % _SIZE_OF_USR_]),
-				_VAL_SVC_PFS_URI_[(i + 1) % _SIZE_OF_URI_]
+				_VAL_SVC_PFS_URI_[i % _SIZE_OF_URI_]
 			);
 	}
 }
@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(LocateMod2RRTest)
 	for (int i = 0; i < 5; ++i) {
 		BOOST_CHECK_EQUAL(
 				SvcLocator::GetUri(RoleCac::USR_R, _USR_NONE_),
-				_VAL_CAC_USR_R_URI_[(i + 1) % _SIZE_OF_URI_]
+				_VAL_CAC_USR_R_URI_[i % _SIZE_OF_URI_]
 			);
 	}
 }

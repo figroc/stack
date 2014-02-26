@@ -5,10 +5,9 @@
 namespace msvc { namespace cfg {
 
 using namespace std;
-using namespace boost;
 
-mutex SvcLocator::_lock;
-shared_ptr<const SvcLocator::endpoint_map> SvcLocator::_uri;
+boost::mutex SvcLocator::_lock;
+boost::shared_ptr<const SvcLocator::endpoint_map> SvcLocator::_uri;
 
 void SvcLocator::Init()
 {
@@ -19,9 +18,9 @@ void SvcLocator::Init()
 
 string SvcLocator::LocateService(const string &name, const string &user)
 {
-	shared_ptr<const endpoint_map> uri;
+	boost::shared_ptr<const endpoint_map> uri;
 	{
-		mutex::scoped_lock lock(_lock);
+		boost::mutex::scoped_lock lock(_lock);
 		uri = _uri;
 	}
 	if (!uri)
@@ -31,7 +30,7 @@ string SvcLocator::LocateService(const string &name, const string &user)
 	if (uri->end() == it)
 		return "";
 
-	const shared_ptr<endpoint_type> &ep = it->second;
+	const boost::shared_ptr<endpoint_type> &ep = it->second;
 	if (!ep)
 		return "";
 
@@ -48,11 +47,11 @@ void SvcLocator::ConfWatcher(Conf *const conf)
 	if (!conf)
 		return;
 
-	const shared_ptr<const conf_value_map> pt = conf->GetAll();
+	const boost::shared_ptr<const conf_value_map> pt = conf->GetAll();
 	if (!pt)
 		return;
 
-	const shared_ptr<endpoint_map> uri(new endpoint_map());
+	const boost::shared_ptr<endpoint_map> uri(new endpoint_map());
 
 	vector<string> inv;
 	for (conf_value_map::const_iterator it = pt->begin(); it != pt->end(); ++it) {
@@ -63,8 +62,9 @@ void SvcLocator::ConfWatcher(Conf *const conf)
 
 			endpoint_map::iterator epi = uri->find(name);
 			if (epi == uri->end()) {
-				epi = uri->insert(make_pair(name, make_shared<endpoint_type>())).first;
+				epi = uri->insert(make_pair(name, boost::make_shared<endpoint_type>())).first;
 				epi->second->type = LT_MODULE;
+				epi->second->counter = 0;
 			}
 
 			if (conf == "loc") {
@@ -89,7 +89,7 @@ void SvcLocator::ConfWatcher(Conf *const conf)
 	}
 
 	{
-		mutex::scoped_lock lock(_lock);
+		boost::mutex::scoped_lock lock(_lock);
 		_uri = uri;
 	}
 }
@@ -101,7 +101,7 @@ string SvcLocator::GetRoundRobin(endpoint_type *const ep)
 
 string SvcLocator::GetModLocated(const endpoint_type *const ep, const string &user)
 {
-	return ep->uri[static_cast<unsigned int>(hash<string>()(user)) % ep->uri.size()];
+	return ep->uri[static_cast<unsigned int>(boost::hash<string>()(user)) % ep->uri.size()];
 }
 
 }}

@@ -5,7 +5,6 @@
 namespace msvc { namespace log {
 
 using namespace std;
-using namespace boost;
 using namespace msvc::util;
 
 const string TraceFormat::LEVEL_STR[] = { "-", "DEBUG", "INFO", "WARN", "ERROR", "FATAL" };
@@ -17,7 +16,7 @@ TraceFormat &TraceFormat::Output(const TraceLevel level, const string &file, con
 	int i = level / 10;
 	if (i < 0 || i > sizeof(LEVEL_STR))
 		i = 0;
-	_buffer << "***\n[" << chrono::steady_clock::now() << "] " << LEVEL_STR[i];
+	_buffer << "***\n[" << boost::chrono::steady_clock::now() << "] " << LEVEL_STR[i];
 	_buffer << " <" << PROCESS_ID << '.' << GetThreadId() << ">@" << HOST_NAME;
 	_buffer << " \n+++ " << file << ": " << line << " \n";
 	return *this;

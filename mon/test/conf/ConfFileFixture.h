@@ -24,7 +24,7 @@ namespace {
 
   const string _CONF_STR_ = "str";
   const string _VAL_STR_ ="some";
-  const string _CONF_STR_VAL_ = _CONF_STR_ + '=' + _VAL_STR_;
+  const string _CONF_STR_VAL_ = _CONF_STR_ + " = " + _VAL_STR_;
 
 
   const string _CONF_INT_ = "int";

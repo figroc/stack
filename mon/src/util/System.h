@@ -8,6 +8,10 @@
 
 namespace msvc { namespace util {
 
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 64
+#endif //HOST_NAME_MAX
+
 inline std::string GetHostName()
 {
 	char name[HOST_NAME_MAX];
