@@ -45,7 +45,7 @@ add_library(trace OBJECT
   "src/trace/TraceFacet.cpp"
 )
 
-add_library(msvc SHARED
+add_library(msvc STATIC
   "src/mon.cpp"
   $<TARGET_OBJECTS:util>
   $<TARGET_OBJECTS:conf>

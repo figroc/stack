@@ -1,2 +1,5 @@
 /*/build/
-/*.xcworkspace/
+*.xcworkspace/
+.metadata/
+.project
+.cproject

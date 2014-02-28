@@ -1,29 +1,46 @@
 #include <boost/test/unit_test.hpp>
 #include "ConfFileFixture.h"
+#include <boost/lambda/lambda.hpp>
 
 namespace msvc { namespace test {
 
 using namespace std;
 using namespace boost;
 using namespace boost::unit_test;
+using namespace boost::lambda;
 using namespace msvc::cfg;
 
 namespace {
-  const string _USR_NONE_ = "";
-  const int _SIZE_OF_USR_ = 2;
-  const string _USR_[] = { "1", "2" };
+const string _USR_NONE_ = "";
+const int _SIZE_OF_USR_ = 2;
+const string _USR_[] = { "1", "2" };
+
+template<typename F, typename U>
+void _svc_locator_rr_test(const SvcRole &role, const F &user, const int size, const U &uri)
+{
+	bool first(true);
+	int shift(0);
+	for (int i = 0; i < 5; ++i) {
+		const string result = SvcLocator::GetUri(role, user(i));
+		if (first) {
+			for ( ; shift < size; ++shift) {
+				if (result == uri[shift])
+					break;
+			}
+			first = false;
+		}
+		BOOST_CHECK_EQUAL(result, uri[(i + shift) % size]);
+	}
+}
 }
 
 BOOST_FIXTURE_TEST_SUITE(SvcLocatorTest, ConfFileFixture)
 
 BOOST_AUTO_TEST_CASE(LocateRRTest)
 {
-	for (int i = 0; i < 5; ++i) {
-		BOOST_CHECK_EQUAL(
-				SvcLocator::GetUri(RoleSvc::PFS, _USR_[i % _SIZE_OF_USR_]),
-				_VAL_SVC_PFS_URI_[i % _SIZE_OF_URI_]
-			);
-	}
+	_svc_locator_rr_test(RoleSvc::PFS,
+			constant(_USR_)[boost::lambda::_1 % _SIZE_OF_USR_],
+			_SIZE_OF_URI_, _VAL_SVC_PFS_URI_);
 }
 
 BOOST_AUTO_TEST_CASE(LocateModTest)
@@ -44,12 +61,9 @@ BOOST_AUTO_TEST_CASE(LocateModTest)
 
 BOOST_AUTO_TEST_CASE(LocateMod2RRTest)
 {
-	for (int i = 0; i < 5; ++i) {
-		BOOST_CHECK_EQUAL(
-				SvcLocator::GetUri(RoleCac::USR_R, _USR_NONE_),
-				_VAL_CAC_USR_R_URI_[i % _SIZE_OF_URI_]
-			);
-	}
+	_svc_locator_rr_test(RoleCac::USR_R,
+			constant(_USR_NONE_),
+			_SIZE_OF_URI_, _VAL_CAC_USR_R_URI_);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
