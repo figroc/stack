@@ -7,16 +7,16 @@
 #include <exception>
 #include <boost/type_traits.hpp>
 
-namespace msvc { namespace log {
+namespace msvc { namespace log { namespace _di {
 
 class TraceFormat {
 private:
-	template<typename T, bool X> struct _helper {
-	inline static void output(std::stringstream &buffer, const T &val) {
+	template<typename S, typename V, bool X> struct _helper {
+	inline static void output(S &buffer, const V &val) {
 		buffer << val;
 	};};
-	template<typename T> struct _helper<T, true> {
-	inline static void output(std::stringstream &buffer, const T &val) {
+	template<typename S, typename V> struct _helper<S, V, true> {
+	inline static void output(S &buffer, const V &val) {
 		buffer << "\n!!! " << val.what();
 	};};
 
@@ -28,7 +28,7 @@ private:
 private:
 	int _pos;
 	std::string _format;
-	std::stringstream _buffer;
+	std::ostringstream _buffer;
 
 public:
 	explicit TraceFormat(const std::string &format)
@@ -38,7 +38,8 @@ public:
 	TraceFormat &Output(const TraceLevel level, const std::string &file, const int line);
 	template<typename T>
 	inline TraceFormat &operator<<(const T &val) {
-		PrepareVal(); _helper<T, boost::is_base_of<std::exception, T>::value>::output(_buffer, val); return *this;
+		typedef _helper<std::ostringstream, T, boost::is_base_of<std::exception, T>::value> _stream_t;
+		PrepareVal(); _stream_t::output(_buffer, val); return *this;
 	};
 	std::string String();
 
@@ -47,6 +48,6 @@ private:
 
 };
 
-}}
+}}}
 
 #endif //MSVC_LOG_TRACE_FORMAT_H

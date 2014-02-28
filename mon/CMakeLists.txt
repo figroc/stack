@@ -43,6 +43,11 @@ add_library(trace OBJECT
   "src/trace/TraceFormat.cpp"
   "src/trace/TraceClient.cpp"
   "src/trace/TraceFacet.cpp"
+  "src/trace/TraceFile.cpp"
+)
+
+add_library(log OBJECT 
+  "src/log/LogClient.cpp"
 )
 
 add_library(msvc STATIC
@@ -51,6 +56,7 @@ add_library(msvc STATIC
   $<TARGET_OBJECTS:conf>
   $<TARGET_OBJECTS:perf>
   $<TARGET_OBJECTS:trace>
+  $<TARGET_OBJECTS:log>
 )
 
 target_link_libraries(msvc

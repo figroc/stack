@@ -1,6 +1,7 @@
 #include <boost/test/unit_test.hpp>
 #include "ConfFileFixture.h"
 #include <boost/lambda/lambda.hpp>
+#include <boost/chrono.hpp>
 
 namespace msvc { namespace test {
 
@@ -20,7 +21,7 @@ void _svc_locator_rr_test(const SvcRole &role, const F &user, const int size, co
 {
 	bool first(true);
 	int shift(0);
-	for (int i = 0; i < 5; ++i) {
+	for (int i = 0; i < 15; ++i) {
 		const string result = SvcLocator::GetUri(role, user(i));
 		if (first) {
 			for ( ; shift < size; ++shift) {

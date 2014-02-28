@@ -1,8 +1,9 @@
 #include "TraceFormat.h"
-#include <boost/chrono.hpp>
+#include <iostream>
+#include <boost/date_time.hpp>
 #include "incl/util/util.h"
 
-namespace msvc { namespace log {
+namespace msvc { namespace log { namespace _di {
 
 using namespace std;
 using namespace msvc::util;
@@ -16,9 +17,11 @@ TraceFormat &TraceFormat::Output(const TraceLevel level, const string &file, con
 	int i = level / 10;
 	if (i < 0 || i > sizeof(LEVEL_STR))
 		i = 0;
-	_buffer << "***\n[" << boost::chrono::steady_clock::now() << "] " << LEVEL_STR[i];
-	_buffer << " <" << PROCESS_ID << '.' << GetThreadId() << ">@" << HOST_NAME;
-	_buffer << " \n+++ " << file << ": " << line << " \n";
+	_buffer << "***\n[" << boost::posix_time::to_iso_extended_string(
+				boost::posix_time::microsec_clock::universal_time())
+			<< "] " << LEVEL_STR[i]
+			<< " <" << PROCESS_ID << '.' << GetThreadId() << ">@" << HOST_NAME
+			<< " \n+++ " << file << ": " << line << " \n";
 	return *this;
 }
 
@@ -46,4 +49,4 @@ void TraceFormat::PrepareVal()
 	}
 }
 
-}}
+}}}
