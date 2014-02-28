@@ -50,6 +50,15 @@ add_library(log OBJECT
   "src/log/LogClient.cpp"
 )
 
+add_library(db OBJECT 
+  "src/db/Database.cpp"
+  "src/db/util/DbPerfC.cpp"
+  "src/db/impl/mongo/MongoDbUri.cpp"
+  "src/db/impl/mongo/MongoDbHelper.cpp"
+  "src/db/impl/mongo/MongoDbConnPool.cpp"
+  "src/db/impl/mongo/MongoDbClient.cpp"
+)
+
 add_library(msvc STATIC
   "src/mon.cpp"
   $<TARGET_OBJECTS:util>
@@ -57,6 +66,7 @@ add_library(msvc STATIC
   $<TARGET_OBJECTS:perf>
   $<TARGET_OBJECTS:trace>
   $<TARGET_OBJECTS:log>
+  $<TARGET_OBJECTS:db>
 )
 
 target_link_libraries(msvc
@@ -66,6 +76,7 @@ target_link_libraries(msvc
   boost_program_options
   cppnetlib-uri
   cppnetlib-server-parsers
+  mongoclient
 )
 
 add_library(util_test OBJECT

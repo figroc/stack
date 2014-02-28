@@ -39,8 +39,8 @@ private:
 		mongo::ConnectionString _host;
 		Authenticator *_auth;
 		mongo::DBConnectionPool *_pool;
-		boost::shared_ptr<PerfCounter> _perfR;
-		boost::shared_ptr<PerfCounter> _perfW;
+		PerfCounter *_perfR;
+		PerfCounter *_perfW;
 
 	public:
 		PoolForUser(const MongoDbUri &uri);
@@ -67,8 +67,8 @@ private:
 				DbPerfC::Pool::free()->Increment();
 			}
 		}
-		inline const boost::shared_ptr<PerfCounter> &perfR() const { return _perfR; }
-		inline const boost::shared_ptr<PerfCounter> &perfW() const { return _perfW; }
+		inline PerfCounter *perfR() const { return _perfR; }
+		inline PerfCounter *perfW() const { return _perfW; }
 	};
 
 public:
@@ -90,8 +90,8 @@ public:
 	public:
 		inline mongo::DBClientBase &operator*() { return *_client; }
 		inline mongo::DBClientBase *operator->() { return _client; }
-		inline const boost::shared_ptr<PerfCounter> &perfR() const { return _pool->perfR(); }
-		inline const boost::shared_ptr<PerfCounter> &perfW() const { return _pool->perfW(); }
+		inline PerfCounter *perfR() const { return _pool->perfR(); }
+		inline PerfCounter *perfW() const { return _pool->perfW(); }
 	};
 
 private:

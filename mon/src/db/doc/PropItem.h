@@ -39,7 +39,7 @@ private:
 
 public:
 	PropValue() : _str(), _val() { }
-	template<typename T> PropValue(const T &value) : _str(value), _val() { }
+	template<typename T> explicit PropValue(const T &value) : _str(value), _val() { }
 	virtual ~PropValue() { }
 
 public:
@@ -74,6 +74,8 @@ template<> inline PropItem::PropItem(const std::string &pname, const time_t &val
 	: PropName(pname, PVT_TIME), PropValue(value) { }
 template<> inline PropItem::PropItem(const std::string &pname, const boost::uuids::uuid &value)
 	: PropName(pname, PVT_UUID), PropValue(value) { }
+
+template<> inline PropValue::PropValue(const PropItem &value) : _str(value._str), _val() { _val._uid = value._val._uid; }
 
 }}
 
