@@ -85,7 +85,7 @@ public:
 		ScopedClient(const ScopedClient &client);
 		ScopedClient &operator=(const ScopedClient &client);
 	public:
-		virtual ~ScopedClient() { _pool->rel(_client); }
+		~ScopedClient() { _pool->rel(_client); }
 
 	public:
 		inline mongo::DBClientBase &operator*() { return *_client; }

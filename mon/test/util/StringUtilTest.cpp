@@ -1,5 +1,6 @@
 #include <boost/test/unit_test.hpp>
 #include "../../incl/util/util.h"
+#include <boost/network/uri.hpp>
 
 namespace msvc { namespace test {
 

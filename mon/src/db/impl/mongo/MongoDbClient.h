@@ -9,6 +9,7 @@
 #include <mongo/client/dbclient.h>
 
 #include "../../Database.h"
+#include "../DbUri.h"
 #include "MongoDbConnPool.h"
 
 namespace msvc { namespace db {
@@ -18,7 +19,7 @@ private:
 	static MongoDbConnPool _pool;
 
 public:
-	static std::auto_ptr<Database> Get(const std::string &uri);
+	static std::auto_ptr<Database> Get(const DbUri &uri);
 
 private:
 	MongoDbUri _uri;

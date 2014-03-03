@@ -13,11 +13,11 @@ using namespace msvc::perf;
 
 MongoDbConnPool MongoDbClient::_pool;
 
-std::auto_ptr<Database> MongoDbClient::Get(const std::string &uri)
+std::auto_ptr<Database> MongoDbClient::Get(const DbUri &uri)
 {
 	const MongoDbUri info(uri);
 	if (!info.valid()) {
-		throw std::logic_error(std::string("invalid mongodb connection string: ").append(uri));
+		throw std::logic_error(std::string("invalid mongodb connection string: ").append(uri.uri()));
 	}
 	return std::auto_ptr<Database>(new MongoDbClient(info));
 }
