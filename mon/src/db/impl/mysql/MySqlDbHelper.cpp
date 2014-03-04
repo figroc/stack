@@ -1,4 +1,5 @@
 #include "MySqlDbHelper.h"
+#include <cppconn/prepared_statement.h>
 
 namespace msvc { namespace db {
 
@@ -15,9 +16,21 @@ auto_ptr<DocTable> MySqlDbHelper::CreateDocFromCursor(const QuerySpec &query, co
 		const boost::shared_ptr<DocRawRow> row = doc->addRow();
 		for (int i = 0; i < query.data.size(); ++i) {
 			switch (query.data[i].type()) {
-			case PVT_INTEGER: row->add(cursor->getInt(i)); break;
-			case PVT_TIME: row->add((time_t)(cursor->getInt(i))); break;
-			//TODO: PVT_UUID
+			case PVT_INTEGER:
+				row->add(cursor->getInt(i)); break;
+			case PVT_TIME:
+				row->add(static_cast<time_t>(cursor->getInt(i))); break;
+			case PVT_UUID: {
+				sql::SQLString str = cursor->getString(i);
+				boost::uuids::uuid uid;
+				if (str.length() == uid.size()) {
+					for (int i = 0; i < uid.size(); ++i)
+						uid.data[i] = str[i];
+				} else {
+					memset(&uid, 0, 8);
+				}
+				row->add(uid);
+				} break;
 			case PVT_STRING:
 			default: row->add(cursor->getString(i).asStdString()); break;
 			}
@@ -120,6 +133,36 @@ string MySqlDbHelper::BuildSort(const vector<SortOption> &sort)
 	return part;
 }
 
+void MySqlDbHelper::FillData(sql::PreparedStatement *const statement,
+			const vector<PropName> &data, const OprParam &param, int &index)
+{
+	for (int i = 0; i < data.size(); ++i) {
+		SetParameter(statement, index + 1, data[i].type(), param.at(index++));
+	}
+}
+
+void MySqlDbHelper::FillModify(sql::PreparedStatement *const statement,
+			const vector<ModifyOption> &modify, const OprParam &param, int &index)
+{
+	for (int i = 0; i < modify.size(); ++i) {
+		SetParameter(statement, index + 1, modify[i].type(), param.at(index++));
+	}
+}
+
+void MySqlDbHelper::FillQuery(sql::PreparedStatement *const statement,
+			const QueryOption &query, const OprParam &param, int &index)
+{
+	for (int i = 0; i < query.size(); ++i) {
+		if (query[i].compose()) {
+			FillQuery(statement, static_cast<const QueryOption &>(query[i]), param, index);
+		} else {
+			SetParameter(statement, index + 1,
+					static_cast<const CriteriaOption &>(query[i]).type(),
+					param.at(index++));
+		}
+	}
+}
+
 string MySqlDbHelper::BuildQueryInner(const QueryOption &query)
 {
 	static const string LOT[] = { "and", "or" };
@@ -153,6 +196,30 @@ string MySqlDbHelper::BuildCriteriaInner(const CriteriaOption &criteria)
 	part.append(COT[criteria.op()]);
 	part.push_back('?'); //TODO: <in> needs extra work
 	return part;
+}
+
+void MySqlDbHelper::SetParameter(sql::PreparedStatement *const statement,
+				const int index, const PropValueType type, const OprValue &value)
+{
+	switch (type) {
+	case PVT_INTEGER:
+		statement->setInt(index, value.getValue<int>(0));
+		break;
+	case PVT_TIME:
+		statement->setInt(index, static_cast<int>(value.getValue<time_t>(0)));
+		break;
+	case PVT_UUID: {
+		boost::uuids::uuid uid = value.getValue<boost::uuids::uuid>(0);
+		string str;
+		for (int i = 0; i < uid.size(); ++i)
+			str.push_back(uid.data[i]);
+		statement->setString(index, str);
+		} break;
+	case PVT_STRING:
+	default:
+		statement->setString(index, value.getValue<string>(0));
+		break;
+	}
 }
 
 }}

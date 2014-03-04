@@ -29,6 +29,8 @@ private:
 	MongoDbClient(const MongoDbUri &uri) : _uri(uri) {
 		_client = _pool.Fetch(uri);
 	}
+	MongoDbClient(const MongoDbClient &client);
+	MongoDbClient &operator=(const MongoDbClient &client);
 
 public:
 	virtual std::auto_ptr<DocTable> Query(const std::string &table,

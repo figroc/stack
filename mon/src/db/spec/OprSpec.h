@@ -1,7 +1,11 @@
 #ifndef DB_OPR_SPEC_H
 #define DB_OPR_SPEC_H
 
+#include <string>
 #include <vector>
+#include <map>
+#include <utility>
+#include <boost/atomic.hpp>
 
 #include "../doc/PropItem.h"
 #include "opt/QueryOption.h"
@@ -11,14 +15,26 @@
 
 namespace msvc { namespace db {
 
-struct OprSpec {
+class OprSpec {
+private:
+	static boost::atomic_uintmax_t VERSION;
+
+private:
+	uintmax_t _version;
+
 protected:
-	OprSpec() { }
+	OprSpec() { update(); }
 public:
 	virtual ~OprSpec() { }
+
+public:
+	inline uintmax_t version() const { return _version; };
+
+protected:
+	inline void update() { _version = VERSION.fetch_add(1, boost::memory_order_relaxed); };
 };
 
-struct DataSpec : public OprSpec {
+class DataSpec : public OprSpec {
 public:
 	std::vector<PropName> data;
 
@@ -26,12 +42,12 @@ public:
 	virtual ~DataSpec() { }
 
 public:
-	inline DataSpec &addData(const PropName &name) { data.push_back(name); return *this; }
+	inline DataSpec &addData(const PropName &name) { data.push_back(name); update(); return *this; }
 
 	inline DataSpec &operator<<(const PropName &name) { return addData(name); }
 };
 
-struct CriteriaSpec : public OprSpec {
+class CriteriaSpec : public OprSpec {
 public:
 	QueryOption query;
 
@@ -41,16 +57,16 @@ public:
 	virtual ~CriteriaSpec() { }
 
 public:
-	inline CriteriaSpec &oprLogic(const LogicalOpType lop) { query.op(lop); return *this; }
-	inline CriteriaSpec &addQuery(const QueryOption &opt) { query.add(opt); return *this; }
-	inline CriteriaSpec &addQuery(const CriteriaOption &opt) { query.add(opt); return *this; }
+	inline CriteriaSpec &oprLogic(const LogicalOpType lop) { query.op(lop); update(); return *this; }
+	inline CriteriaSpec &addQuery(const QueryOption &opt) { query.add(opt); update(); return *this; }
+	inline CriteriaSpec &addQuery(const CriteriaOption &opt) { query.add(opt); update(); return *this; }
 
 	inline CriteriaSpec &operator<<(const LogicalOpType lop) { return oprLogic(lop); }
 	inline CriteriaSpec &operator<<(const QueryOption &opt) { return addQuery(opt); }
 	inline CriteriaSpec &operator<<(const CriteriaOption &opt) { return addQuery(opt); }
 };
 
-struct QuerySpec : public CriteriaSpec {
+class QuerySpec : public CriteriaSpec {
 public:
 	std::vector<PropName> data;
 	std::vector<SortOption> sort;
@@ -59,8 +75,8 @@ public:
 	virtual ~QuerySpec() { }
 
 public:
-	inline QuerySpec &addData(const PropName &name) { data.push_back(name); return *this; }
-	inline QuerySpec &addSort(const SortOption &option) { sort.push_back(option); return *this; }
+	inline QuerySpec &addData(const PropName &name) { data.push_back(name); update(); return *this; }
+	inline QuerySpec &addSort(const SortOption &option) { sort.push_back(option); update(); return *this; }
 
 	inline QuerySpec &operator<<(const LogicalOpType lop) { oprLogic(lop); return *this; }
 	inline QuerySpec &operator<<(const QueryOption &opt) { addQuery(opt); return *this; }
@@ -70,7 +86,7 @@ public:
 	inline QuerySpec &operator<<(const SortOption &option) { return addSort(option); }
 };
 
-struct ModifySpec : public CriteriaSpec {
+class ModifySpec : public CriteriaSpec {
 public:
 	std::vector<ModifyOption> modify;
 
@@ -78,7 +94,7 @@ public:
 	virtual ~ModifySpec() { }
 
 public:
-	inline ModifySpec &addModify(const ModifyOption &option) { modify.push_back(option); return *this; }
+	inline ModifySpec &addModify(const ModifyOption &option) { modify.push_back(option); update(); return *this; }
 
 	inline ModifySpec &operator<<(const LogicalOpType lop) { oprLogic(lop); return *this; }
 	inline ModifySpec &operator<<(const QueryOption &opt) { addQuery(opt); return *this; }
@@ -87,7 +103,7 @@ public:
 	inline ModifySpec &operator<<(const ModifyOption &option) { return addModify(option); }
 };
 
-struct RemoveSpec : public CriteriaSpec {
+class RemoveSpec : public CriteriaSpec {
 public:
 	virtual ~RemoveSpec() { }
 

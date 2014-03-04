@@ -52,6 +52,7 @@ add_library(log OBJECT
 
 add_library(db OBJECT 
   "src/db/Database.cpp"
+  "src/db/spec/OprSpec.cpp"
   "src/db/util/DbPerfC.cpp"
   "src/db/impl/DbUri.cpp"
   "src/db/impl/mongo/MongoDbUri.cpp"
@@ -61,6 +62,7 @@ add_library(db OBJECT
   "src/db/impl/mysql/MySqlDbUri.cpp"
   "src/db/impl/mysql/MySqlDbHelper.cpp"
   "src/db/impl/mysql/MySqlDbConnPool.cpp"
+  "src/db/impl/mysql/MySqlDbClient.cpp"
 )
 
 add_library(msvc STATIC

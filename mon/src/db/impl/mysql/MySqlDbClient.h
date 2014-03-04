@@ -4,6 +4,9 @@
 #include "../../Database.h"
 #include "../DbUri.h"
 #include "MySqlDbConnPool.h"
+#include <string>
+#include <memory>
+#include <boost/smart_ptr.hpp>
 
 namespace msvc { namespace db {
 
@@ -22,6 +25,8 @@ private:
 	MySqlDbClient(const MySqlDbUri &uri) : _uri(uri) {
 		_client = _pool->Fetch(uri);
 	}
+	MySqlDbClient(const MySqlDbClient &client);
+	MySqlDbClient &operator=(const MySqlDbClient &client);
 
 public:
 	virtual std::auto_ptr<DocTable> Query(const std::string &table,
