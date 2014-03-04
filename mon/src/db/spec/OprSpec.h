@@ -25,6 +25,8 @@ private:
 protected:
 	OprSpec() { update(); }
 public:
+	OprSpec(const OprSpec &spec) { update(); }
+	OprSpec &operator=(const OprSpec &spec) { update(); return *this; }
 	virtual ~OprSpec() { }
 
 public:
