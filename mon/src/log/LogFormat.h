@@ -17,8 +17,10 @@ private:
 	template<typename S> struct _helper<S, std::string> {
 	inline static void output(S &buffer, const std::string &val) {
 		int c(val.find(',')), q(val.find('"'));
-		if (c != std::string::npos || q != std::string::npos) {
+		if (q != std::string::npos) {
 			buffer << '"' << boost::replace_all_copy(val, "\"", "\"\"") << '"';
+		} else if (c != std::string::npos) {
+			buffer << '"' << val << '"';
 		} else {
 			buffer << val;
 		}
