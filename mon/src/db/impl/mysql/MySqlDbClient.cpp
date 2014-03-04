@@ -33,7 +33,10 @@ auto_ptr<DocTable> MySqlDbClient::Query(const string &table, const QuerySpec &qu
 
 	int index = 0;
 	MySqlDbHelper::FillQuery(stmt, query.query, param, index);
-	return MySqlDbHelper::CreateDocFromCursor(query, std::auto_ptr<sql::ResultSet>(stmt->executeQuery()));
+	auto_ptr<DocTable> doc = MySqlDbHelper::CreateDocFromCursor(query,
+			std::auto_ptr<sql::ResultSet>(stmt->executeQuery()));
+	stmt->clearParameters();
+	return doc;
 }
 
 void MySqlDbClient::Insert(const std::string &table, const DataSpec &data, const OprParam &param)
@@ -52,6 +55,7 @@ void MySqlDbClient::Insert(const std::string &table, const DataSpec &data, const
 	int index = 0;
 	MySqlDbHelper::FillData(stmt, data.data, param, index);
 	stmt->execute();
+	stmt->clearParameters();
 }
 
 void MySqlDbClient::Update(const std::string &table, const ModifySpec &modify, const OprParam &param)
@@ -72,6 +76,7 @@ void MySqlDbClient::Update(const std::string &table, const ModifySpec &modify, c
 	MySqlDbHelper::FillModify(stmt, modify.modify, param, index);
 	MySqlDbHelper::FillQuery(stmt, modify.query, param, index);
 	stmt->execute();
+	stmt->clearParameters();
 }
 
 void MySqlDbClient::Remove(const std::string &table, const RemoveSpec &remove, const OprParam &param)
@@ -90,6 +95,7 @@ void MySqlDbClient::Remove(const std::string &table, const RemoveSpec &remove, c
 	int index = 0;
 	MySqlDbHelper::FillQuery(stmt, remove.query, param, index);
 	stmt->execute();
+	stmt->clearParameters();
 }
 
 }}
