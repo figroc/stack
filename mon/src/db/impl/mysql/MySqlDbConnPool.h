@@ -75,7 +75,7 @@ public:
 	};
 
 private:
-	static const int MAX_CONN_IN_POOL = 50;
+	static const int MAX_CONN_IN_POOL = 100;
 
 public:
 	inline static boost::shared_ptr<MySqlDbConnPool> Create() {
