@@ -51,7 +51,9 @@ void MySqlDbConnPool::Release(const MySqlDbUri &uri, const sql_conn_info &conn)
 	if (conn.first && !(conn.first->isClosed())) {
 		boost::mutex::scoped_lock lock(_lock);
 		sql_conn_map::iterator it = _conns.find(uri.userAtDb());
-		if (it != _conns.end() || it->second.first->size() < MAX_CONN_IN_POOL) {
+		if (it != _conns.end()) {
+			while (it->second.first->size() >= MAX_CONN_IN_POOL)
+				it->second.first->pop_back();
 			it->second.first->push_front(conn);
 			DbPerfC::Pool::free()->Increment();
 		}
