@@ -30,51 +30,49 @@ bool Uri::ParseUriStr(const string &uri)
 
 	offset += 3;
 	int endpos = uri.find(':', offset);
-	if (endpos <= offset)
+	if (endpos < offset)
 		return false;
 	_user = uri.substr(offset, endpos - offset);
 
 	offset = endpos + 1;
 	endpos = uri.find('@', offset);
-	if (endpos <= offset)
+	if (endpos < offset)
 		return false;
 	_pass = uri.substr(offset, endpos - offset);
 
 	offset = endpos + 1;
 	endpos = uri.find('/', offset);
-	if (endpos <= offset)
+	if (endpos < offset)
 		return false;
 	_host = uri.substr(offset, endpos - offset);
 
 	offset = endpos + 1;
 	endpos = uri.find('?', offset);
-	if (endpos == offset)
-		return false;
 	if (endpos < offset) {
 		_path = uri.substr(offset);
-		return true;
-	}
-	_path = uri.substr(offset, endpos - offset);
+	} else {
+		_path = uri.substr(offset, endpos - offset);
 
-	while(endpos >= offset) {
-		offset = endpos + 1;
+		while(endpos >= offset) {
+			offset = endpos + 1;
 
-		string optn, optv;
-		endpos = uri.find_first_of("=&", offset);
-		if (endpos < offset) {
-			optn = uri.substr(offset);
-		} else {
-			optn = uri.substr(offset, endpos - offset);
-			if (uri[endpos] == '=') {
-				offset = endpos + 1;
-				endpos = uri.find('&', offset);
-				if (endpos < offset)
-					optv = uri.substr(offset);
-				else
-					optv = uri.substr(offset, endpos - offset);
+			string optn, optv;
+			endpos = uri.find_first_of("=&", offset);
+			if (endpos < offset) {
+				optn = uri.substr(offset);
+			} else {
+				optn = uri.substr(offset, endpos - offset);
+				if (uri[endpos] == '=') {
+					offset = endpos + 1;
+					endpos = uri.find('&', offset);
+					if (endpos < offset)
+						optv = uri.substr(offset);
+					else
+						optv = uri.substr(offset, endpos - offset);
+				}
 			}
+			_opts[optn] = optv;
 		}
-		_opts[optn] = optv;
 	}
 	return true;
 }

@@ -23,7 +23,7 @@ private:
 
 public:
 	Uri(const std::string &uri);
-	~Uri() { }
+	virtual ~Uri() { };
 
 public:
 	inline const std::string &uri() const { return _uri; }
@@ -49,9 +49,13 @@ public:
 		return it == _opts.end() ? false : (val = it->second, true);
 	}
 
+protected:
+	inline bool &valid() { return _valid; }
+
 private:
 	bool ParseUriStr(const std::string &uri);
 };
+
 }}
 
 #endif /* DB_MONGODB_URI_H */
