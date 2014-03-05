@@ -65,6 +65,13 @@ add_library(db OBJECT
   "src/db/impl/mysql/MySqlDbClient.cpp"
 )
 
+add_library(cache OBJECT 
+  "src/cache/Cache.cpp"
+  "src/cache/impl/redis/RedisUri.cpp"
+  "src/cache/impl/redis/RedisConnPool.cpp"
+  "src/cache/impl/redis/RedisClient.cpp"
+)
+
 add_library(msvc STATIC
   "src/mon.cpp"
   $<TARGET_OBJECTS:util>
@@ -73,6 +80,7 @@ add_library(msvc STATIC
   $<TARGET_OBJECTS:trace>
   $<TARGET_OBJECTS:log>
   $<TARGET_OBJECTS:db>
+  $<TARGET_OBJECTS:cache>
 )
 
 target_link_libraries(msvc
@@ -83,6 +91,7 @@ target_link_libraries(msvc
   cppnetlib-uri
   cppnetlib-server-parsers
   mongoclient
+  hiredis
 )
 
 add_library(util_test OBJECT

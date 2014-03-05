@@ -49,9 +49,6 @@ public:
 		return it == _opts.end() ? false : (val = it->second, true);
 	}
 
-protected:
-	inline bool &valid() { return _valid; }
-
 private:
 	bool ParseUriStr(const std::string &uri);
 };
