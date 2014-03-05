@@ -22,6 +22,7 @@ link_directories(/usr/local/lib)
 
 add_library(util OBJECT
   "src/util/String.cpp"
+  "src/util/Uri.cpp"
   "src/util/Network.cpp"
 )
 
@@ -54,7 +55,6 @@ add_library(db OBJECT
   "src/db/Database.cpp"
   "src/db/spec/OprSpec.cpp"
   "src/db/util/DbPerfC.cpp"
-  "src/db/impl/DbUri.cpp"
   "src/db/impl/mongo/MongoDbUri.cpp"
   "src/db/impl/mongo/MongoDbHelper.cpp"
   "src/db/impl/mongo/MongoDbConnPool.cpp"
