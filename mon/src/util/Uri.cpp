@@ -1,25 +1,27 @@
-#include "DbUri.h"
+#include "Uri.h"
 #include "incl/log/log.h"
 
-namespace msvc { namespace db {
+namespace msvc { namespace util {
 
 using namespace std;
 using namespace msvc::log;
 
-DbUri::DbUri(const string &uri) : _uri(uri), _opts()
+Uri::Uri(const string &uri) : _uri(uri), _opts()
 {
 	try {
 		_valid = ParseUriStr(uri);
 	} catch (const exception &ex) {
-		LC_TRACE_WARN("error parsing db uri: %%", uri, ex);
+		LC_TRACE_WARN("error parsing uri: %%", uri, ex);
 	}
-	if (_valid)
-		_userAtDb.append(_scheme).append(":")
+	if (_valid) {
+		_identity.append(_scheme).append(":")
 				 .append(_user).append("@")
-				 .append(_host).append("$").append(_name);
+				 .append(_host).append("$")
+				 .append(_path);
+	}
 }
 
-bool DbUri::ParseUriStr(const string &uri)
+bool Uri::ParseUriStr(const string &uri)
 {
 	int offset = uri.find("://");
 	if (offset < 1)
@@ -49,10 +51,10 @@ bool DbUri::ParseUriStr(const string &uri)
 	if (endpos == offset)
 		return false;
 	if (endpos < offset) {
-		_name = uri.substr(offset);
+		_path = uri.substr(offset);
 		return true;
 	}
-	_name = uri.substr(offset, endpos - offset);
+	_path = uri.substr(offset, endpos - offset);
 
 	while(endpos >= offset) {
 		offset = endpos + 1;

@@ -6,10 +6,11 @@ namespace msvc { namespace db {
 
 using namespace std;
 using namespace msvc::perf;
+using namespace msvc::util;
 
 boost::shared_ptr<MySqlDbConnPool> MySqlDbClient::_pool = MySqlDbConnPool::Create();
 
-auto_ptr<Database> MySqlDbClient::Get(const DbUri &uri)
+auto_ptr<Database> MySqlDbClient::Get(const Uri &uri)
 {
 	MySqlDbUri info(uri);
 	if (!info.valid())
@@ -28,14 +29,25 @@ auto_ptr<DocTable> MySqlDbClient::Query(const string &table, const QuerySpec &qu
 		sql.append(" from `").append(table).append("` ");
 		sql.append(MySqlDbHelper::BuildQuery(query.query)).push_back(' ');
 		sql.append(MySqlDbHelper::BuildSort(query.sort));
-		_client->statement(query.version(), stmt = (*_client)->prepareStatement(sql));
+
+		stmt = (*_client)->prepareStatement(sql);
+		if (!stmt)
+			throw runtime_error(string("failed to prepare: ") + sql);
+		_client->statement(query.version(), stmt);
 	}
 
 	int index = 0;
 	MySqlDbHelper::FillQuery(stmt, query.query, param, index);
-	auto_ptr<DocTable> doc = MySqlDbHelper::CreateDocFromCursor(query,
-			std::auto_ptr<sql::ResultSet>(stmt->executeQuery()));
-	stmt->clearParameters();
+
+	auto_ptr<DocTable> doc;
+	try {
+		auto_ptr<sql::ResultSet> rs(stmt->executeQuery());
+		doc = MySqlDbHelper::CreateDocFromCursor(query, rs);
+		stmt->clearParameters();
+	} catch (...) {
+		stmt->clearParameters();
+		throw;
+	}
 	return doc;
 }
 
@@ -49,13 +61,23 @@ void MySqlDbClient::Insert(const std::string &table, const DataSpec &data, const
 		string sql("insert into `");
 		sql.append(table).append("` ");
 		sql.append(MySqlDbHelper::BuildData(data.data));
-		_client->statement(data.version(), stmt = (*_client)->prepareStatement(sql));
+
+		stmt = (*_client)->prepareStatement(sql);
+		if (!stmt)
+			throw runtime_error(string("failed to prepare: ") + sql);
+		_client->statement(data.version(), stmt);
 	}
 
 	int index = 0;
 	MySqlDbHelper::FillData(stmt, data.data, param, index);
-	stmt->execute();
-	stmt->clearParameters();
+
+	try {
+		stmt->execute();
+		stmt->clearParameters();
+	} catch (...) {
+		stmt->clearParameters();
+		throw;
+	}
 }
 
 void MySqlDbClient::Update(const std::string &table, const ModifySpec &modify, const OprParam &param)
@@ -69,14 +91,24 @@ void MySqlDbClient::Update(const std::string &table, const ModifySpec &modify, c
 		sql.append(table).append("` ");
 		sql.append(MySqlDbHelper::BuildModify(modify.modify)).push_back(' ');
 		sql.append(MySqlDbHelper::BuildQuery(modify.query));
-		_client->statement(modify.version(), stmt = (*_client)->prepareStatement(sql));
+
+		stmt = (*_client)->prepareStatement(sql);
+		if (!stmt)
+			throw runtime_error(string("failed to prepare: ") + sql);
+		_client->statement(modify.version(), stmt);
 	}
 
 	int index = 0;
 	MySqlDbHelper::FillModify(stmt, modify.modify, param, index);
 	MySqlDbHelper::FillQuery(stmt, modify.query, param, index);
-	stmt->execute();
-	stmt->clearParameters();
+
+	try {
+		stmt->execute();
+		stmt->clearParameters();
+	} catch (...) {
+		stmt->clearParameters();
+		throw;
+	}
 }
 
 void MySqlDbClient::Remove(const std::string &table, const RemoveSpec &remove, const OprParam &param)
@@ -89,13 +121,23 @@ void MySqlDbClient::Remove(const std::string &table, const RemoveSpec &remove, c
 		string sql("delete from `");
 		sql.append(table).append("` ");
 		sql.append(MySqlDbHelper::BuildQuery(remove.query));
-		_client->statement(remove.version(), stmt = (*_client)->prepareStatement(sql));
+
+		stmt = (*_client)->prepareStatement(sql);
+		if (!stmt)
+			throw runtime_error(string("failed to prepare: ") + sql);
+		_client->statement(remove.version(), stmt);
 	}
 
 	int index = 0;
 	MySqlDbHelper::FillQuery(stmt, remove.query, param, index);
-	stmt->execute();
-	stmt->clearParameters();
+
+	try {
+		stmt->execute();
+		stmt->clearParameters();
+	} catch (...) {
+		stmt->clearParameters();
+		throw;
+	}
 }
 
 }}

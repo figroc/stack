@@ -4,9 +4,9 @@
 #include <string>
 #include <map>
 
-namespace msvc { namespace db {
+namespace msvc { namespace util {
 
-class DbUri {
+class Uri {
 private:
 	std::string _uri;
 
@@ -16,15 +16,14 @@ private:
 	std::string _user;
 	std::string _pass;
 	std::string _host;
-	std::string _name;
+	std::string _path;
 
+	std::string _identity;
 	std::map<std::string, std::string> _opts;
 
-	std::string _userAtDb;
-
 public:
-	DbUri(const std::string &uri);
-	~DbUri() { }
+	Uri(const std::string &uri);
+	~Uri() { }
 
 public:
 	inline const std::string &uri() const { return _uri; }
@@ -34,7 +33,9 @@ public:
 	inline const std::string &user() const { return _user; }
 	inline const std::string &pass() const { return _pass; }
 	inline const std::string &host() const { return _host; }
-	inline const std::string &name() const { return _name; }
+	inline const std::string &path() const { return _path; }
+
+	inline const std::string &identity() const { return _identity; }
 
 	inline bool optExists(const std::string &opt) const {
 		return _opts.find(opt) != _opts.end();
@@ -47,8 +48,6 @@ public:
 		std::map<std::string, std::string>::const_iterator it = _opts.find(opt);
 		return it == _opts.end() ? false : (val = it->second, true);
 	}
-
-	inline const std::string &userAtDb() const { return _userAtDb; }
 
 private:
 	bool ParseUriStr(const std::string &uri);

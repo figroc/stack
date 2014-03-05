@@ -2,7 +2,7 @@
 #define DB_MYSQL_DB_CLIENT_H
 
 #include "../../Database.h"
-#include "../DbUri.h"
+#include "MySqlDbUri.h"
 #include "MySqlDbConnPool.h"
 #include <string>
 #include <memory>
@@ -10,12 +10,14 @@
 
 namespace msvc { namespace db {
 
+using namespace msvc::util;
+
 class MySqlDbClient : public Database {
 private:
 	static boost::shared_ptr<MySqlDbConnPool> _pool;
 
 public:
-	static std::auto_ptr<Database> Get(const DbUri &uri);
+	static std::auto_ptr<Database> Get(const Uri &uri);
 
 private:
 	MySqlDbUri _uri;

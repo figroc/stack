@@ -2,6 +2,7 @@
 #define MSVC_UTIL_EXPORT_H
 
 #include "../../src/util/String.h"
+#include "../../src/util/Uri.h"
 #include "../../src/util/SafeFunctor.h"
 #include "../../src/util/WaitableEvent.h"
 #include "../../src/util/Network.h"

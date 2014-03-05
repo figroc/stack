@@ -48,7 +48,7 @@ auto_ptr<MySqlDbConnPool::ScopedConnection> MySqlDbConnPool::Fetch(const MySqlDb
 
 void MySqlDbConnPool::Release(const MySqlDbUri &uri, const sql_conn_info &conn)
 {
-	if (conn.first && !conn.first->isClosed()) {
+	if (conn.first && !(conn.first->isClosed())) {
 		boost::mutex::scoped_lock lock(_lock);
 		sql_conn_map::iterator it = _conns.find(uri.userAtDb());
 		if (it != _conns.end() || it->second.first->size() < MAX_CONN_IN_POOL) {

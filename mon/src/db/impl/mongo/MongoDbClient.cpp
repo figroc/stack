@@ -5,15 +5,15 @@
 
 #include "MongoDbClient.h"
 #include "MongoDbHelper.h"
-#include "../../util/DbPerfC.h"
 
 namespace msvc { namespace db {
 
 using namespace msvc::perf;
+using namespace msvc::util;
 
 MongoDbConnPool MongoDbClient::_pool;
 
-std::auto_ptr<Database> MongoDbClient::Get(const DbUri &uri)
+std::auto_ptr<Database> MongoDbClient::Get(const Uri &uri)
 {
 	const MongoDbUri info(uri);
 	if (!info.valid()) {
