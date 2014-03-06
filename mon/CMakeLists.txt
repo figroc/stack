@@ -93,6 +93,7 @@ target_link_libraries(msvc
   cppnetlib-uri
   cppnetlib-server-parsers
   mongoclient
+  mysqlcppconn
   hiredis
 )
 
@@ -111,11 +112,16 @@ add_library(log_test OBJECT
   "test/log/LogTest.cpp"
 )
 
+add_library(db_test OBJECT
+  "test/db/MySqlTest.cpp"
+)
+
 add_executable(msvc_test 
   "test/TestSuite.cpp" 
   $<TARGET_OBJECTS:util_test> 
   $<TARGET_OBJECTS:conf_test>
   $<TARGET_OBJECTS:log_test>
+  $<TARGET_OBJECTS:db_test>
 )
 
 target_link_libraries(msvc_test

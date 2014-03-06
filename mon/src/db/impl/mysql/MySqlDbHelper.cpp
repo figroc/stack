@@ -14,25 +14,25 @@ auto_ptr<DocTable> MySqlDbHelper::CreateDocFromCursor(const QuerySpec &query, co
 
 	while (cursor->next()) {
 		const boost::shared_ptr<DocRawRow> row = doc->addRow();
-		for (int i = 0; i < query.data.size(); ++i) {
+		for (int i = 0; i < query.data.size(); ) {
 			switch (query.data[i].type()) {
 			case PVT_INTEGER:
-				row->add(cursor->getInt(i)); break;
+				row->add(cursor->getInt(++i)); break;
 			case PVT_TIME:
-				row->add(static_cast<time_t>(cursor->getInt(i))); break;
+				row->add(static_cast<time_t>(cursor->getInt(++i))); break;
 			case PVT_UUID: {
-				sql::SQLString str = cursor->getString(i);
+				sql::SQLString str = cursor->getString(++i);
 				boost::uuids::uuid uid;
 				if (str.length() == uid.size()) {
-					for (int i = 0; i < uid.size(); ++i)
-						uid.data[i] = str[i];
+					for (int n = 0; n < uid.size(); ++n)
+						uid.data[n] = str[n];
 				} else {
 					memset(&uid, 0, 8);
 				}
 				row->add(uid);
 				} break;
 			case PVT_STRING:
-			default: row->add(cursor->getString(i).asStdString()); break;
+			default: row->add(cursor->getString(++i).asStdString()); break;
 			}
 		}
 	}
@@ -137,7 +137,7 @@ void MySqlDbHelper::FillData(sql::PreparedStatement *const statement,
 			const vector<PropName> &data, const OprParam &param, int &index)
 {
 	for (int i = 0; i < data.size(); ++i) {
-		SetParameter(statement, index + 1, data[i].type(), param.at(index++));
+		SetParameter(statement, index, data[i].type(), param.at(index++));
 	}
 }
 
@@ -145,7 +145,7 @@ void MySqlDbHelper::FillModify(sql::PreparedStatement *const statement,
 			const vector<ModifyOption> &modify, const OprParam &param, int &index)
 {
 	for (int i = 0; i < modify.size(); ++i) {
-		SetParameter(statement, index + 1, modify[i].type(), param.at(index++));
+		SetParameter(statement, index, modify[i].type(), param.at(index++));
 	}
 }
 
@@ -156,7 +156,7 @@ void MySqlDbHelper::FillQuery(sql::PreparedStatement *const statement,
 		if (query[i].compose()) {
 			FillQuery(statement, static_cast<const QueryOption &>(query[i]), param, index);
 		} else {
-			SetParameter(statement, index + 1,
+			SetParameter(statement, index,
 					static_cast<const CriteriaOption &>(query[i]).type(),
 					param.at(index++));
 		}
@@ -211,8 +211,8 @@ void MySqlDbHelper::SetParameter(sql::PreparedStatement *const statement,
 	case PVT_UUID: {
 		boost::uuids::uuid uid = value.getValue<boost::uuids::uuid>(0);
 		string str;
-		for (int i = 0; i < uid.size(); ++i)
-			str.push_back(uid.data[i]);
+		for (int n = 0; n < uid.size(); ++n)
+			str.push_back(uid.data[n]);
 		statement->setString(index, str);
 		} break;
 	case PVT_STRING:
