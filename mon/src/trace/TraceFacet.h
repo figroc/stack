@@ -4,8 +4,8 @@
 #include "TraceType.h"
 #include "TraceFormat.h"
 #include "TraceClient.h"
+#include "TraceSetting.h"
 #include <string>
-#include "incl/conf/conf.h"
 
 namespace msvc { namespace log {
 
@@ -19,11 +19,8 @@ namespace msvc { namespace log {
 
 namespace msvc { namespace log { namespace _di {
 
-using namespace msvc::cfg;
-
 #define MSVC_LOG_DI_TRACE_FACET_TEMPLATE_BODY(args) \
-	static const std::string LC_TL_CFG = "log.level"; \
-	if (level >= SvcSetting::Integer(LC_TL_CFG, LC_TL_ERROR)) try {\
+	if (level >= TraceSetting::Level()) try {\
 		TraceFormat message(format); \
 		message.Output(level, file, line) << args; \
 		TraceClient::Record(message.String()); \

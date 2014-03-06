@@ -28,7 +28,7 @@ void TraceFile::TestSwitch()
 			boost::system::error_code err;
 			boost::filesystem::create_directories(_path, err);
 		}
-		string filename = _path + _name + '_' + boost::posix_time::to_iso_string(_time) + _fext;
+		string filename = _file_name_compose();
 		if (_file.is_open())
 			_file.close();
 		_file.open(filename.c_str(), ios::binary | ios::out | ios::app);

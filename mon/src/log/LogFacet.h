@@ -9,7 +9,7 @@
 
 namespace msvc { namespace log {
 
-#define LC_EVENT_LOG(...) msvc::log::_di::LogEvent(__VA_ARGS__)
+#define LC_LOG_EVENT(...) msvc::log::_di::LogEvent(__VA_ARGS__)
 
 }}
 

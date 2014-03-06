@@ -1,5 +1,6 @@
 #include "TraceClient.h"
 #include "TraceFormat.h"
+#include "TraceSetting.h"
 #include <iostream>
 #include <boost/thread.hpp>
 #include <boost/chrono.hpp>
@@ -11,7 +12,6 @@ namespace msvc { namespace log {
 using namespace std;
 using namespace msvc::log::_di;
 using namespace msvc::util;
-using namespace msvc::cfg;
 
 boost::atomic_bool TraceClient::_init(false);
 TraceQueue<string> TraceClient::_queue;
@@ -34,7 +34,7 @@ void TraceClient::Recorder()
 	while (true) try {
 		boost::this_thread::sleep_for(boost::chrono::milliseconds(500));
 
-		_file.Switch(SvcSetting::String("log.dir", "log/"));
+		_file.Switch(TraceSetting::Dir());
 
 		auto_ptr<string> msg = _queue.Pop();
 		while (msg.get() != 0) {

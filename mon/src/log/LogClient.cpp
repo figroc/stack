@@ -1,11 +1,10 @@
 #include "LogClient.h"
+#include "LogSetting.h"
 #include <boost/thread.hpp>
-#include "incl/conf/conf.h"
 
 namespace msvc { namespace log {
 
 using namespace std;
-using namespace msvc::cfg;
 using namespace msvc::log::_di;
 
 boost::atomic_bool LogClient::_init(false);
@@ -15,7 +14,7 @@ map< string, boost::shared_ptr<TraceFile> > LogClient::_files;
 void LogClient::Init()
 {
 	if (!_init.exchange(true, boost::memory_order_seq_cst)) {
-		_dir = SvcSetting::String("log.evt", "evt/");
+		_dir = LogSetting::Dir();
 		boost::thread(&LogClient::Writer).detach();
 	}
 }
