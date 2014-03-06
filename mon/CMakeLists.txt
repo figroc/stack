@@ -113,7 +113,7 @@ add_library(log_test OBJECT
 )
 
 add_library(db_test OBJECT
-  "test/db/MySqlTest.cpp"
+  "test/db/DatabaseTest.cpp"
 )
 
 add_executable(msvc_test 

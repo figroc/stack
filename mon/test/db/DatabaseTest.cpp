@@ -10,11 +10,9 @@ using namespace boost::unit_test;
 using namespace boost::lambda;
 using namespace msvc::db;
 
-BOOST_FIXTURE_TEST_SUITE(MySqlTest, DatabaseFixture)
-
-BOOST_AUTO_TEST_CASE(SqlClientTest)
+namespace {
+void _database_test(const auto_ptr<Database> &db)
 {
-	auto_ptr<Database> db = Database::Get("mysql://dev:test@127.0.0.1:3306/test");
 	BOOST_REQUIRE(db.get());
 
 	QuerySpec query = QuerySpec() << PropName("name", PVT_STRING) << PropName("age", PVT_INTEGER);
@@ -47,6 +45,19 @@ BOOST_AUTO_TEST_CASE(SqlClientTest)
 	doc = db->Query("user", query, OprParam());
 	BOOST_REQUIRE(doc.get());
 	BOOST_CHECK_EQUAL(doc->size(), 0);
+}
+}
+
+BOOST_FIXTURE_TEST_SUITE(DatabaseTest, DatabaseFixture)
+
+BOOST_AUTO_TEST_CASE(MySqlDbTest)
+{
+	_database_test(Database::Get("mysql://dev:test@127.0.0.1:3306/test"));
+}
+
+BOOST_AUTO_TEST_CASE(MongoDbTest)
+{
+	_database_test(Database::Get("mongodb://dev:test@127.0.0.1:27017/test"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

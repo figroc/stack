@@ -118,6 +118,8 @@ BSONObj MongoDbHelper::BuildModify(const vector<ModifyOption> &modify, const Opr
 BSONObj MongoDbHelper::BuildQueryInner(const QueryOption &query, const OprParam &param, int &index)
 {
 	BSONArrayBuilder builder(64);
+	if (query.size() < 1)
+		return builder.obj();
 	for (int i = 0; i < query.size(); ++i) {
 		const ICriteria &criteria = query[i];
 		if (criteria.compose()) {
