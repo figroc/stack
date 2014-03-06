@@ -53,8 +53,7 @@ public:
 		ScopedConnection &operator=(const ScopedConnection &conn);
 	public:
 		~ScopedConnection() {
-			if (!_conn.first->isClosed())
-				_pool->Release(_uri, _conn);
+			_pool->Release(_uri, _conn);
 			DbPerfC::Pool::used()->Decrement();
 		};
 

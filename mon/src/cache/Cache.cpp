@@ -1,8 +1,14 @@
 #include "Cache.h"
+#include "util/CachePerfC.h"
 
 namespace msvc { namespace cache {
 
 using namespace std;
+
+void Cache::Init()
+{
+	CachePerfC::Init();
+}
 
 auto_ptr<Cache> Cache::Get(const std::string &uri)
 {

@@ -12,7 +12,7 @@ auto_ptr<MySqlDbConnPool::ScopedConnection> MySqlDbConnPool::Fetch(const MySqlDb
 	sql_conn_map::iterator it;
 	{
 		boost::mutex::scoped_lock lock(_lock);
-		sql_conn_map::iterator it = _conns.find(uri.userAtDb());
+		it = _conns.find(uri.userAtDb());
 		if (it == _conns.end()) {
 			it = _conns.insert(make_pair(uri.userAtDb(),
 									sql_conn_entry(
@@ -28,13 +28,14 @@ auto_ptr<MySqlDbConnPool::ScopedConnection> MySqlDbConnPool::Fetch(const MySqlDb
 				sql_conn_info info = it->second.first->front();
 				it->second.first->pop_front();
 				DbPerfC::Pool::free()->Decrement();
-				if (info.first->isClosed())
-					continue;
-				conn.reset(new ScopedConnection(shared_from_this(), uri, info, it->second.second));
-				break;
+				if (!(info.first->isClosed())) {
+					conn.reset(new ScopedConnection(shared_from_this(), uri, info, it->second.second));
+					break;
+				}
 			}
 		}
 	}
+
 	if (!conn.get()) {
 		conn.reset(new ScopedConnection(shared_from_this(), uri,
 				sql_conn_info(
@@ -52,8 +53,10 @@ void MySqlDbConnPool::Release(const MySqlDbUri &uri, const sql_conn_info &conn)
 		boost::mutex::scoped_lock lock(_lock);
 		sql_conn_map::iterator it = _conns.find(uri.userAtDb());
 		if (it != _conns.end()) {
-			while (it->second.first->size() >= MAX_CONN_IN_POOL)
+			while (it->second.first->size() >= MAX_CONN_IN_POOL) {
 				it->second.first->pop_back();
+				DbPerfC::Pool::free()->Decrement();
+			}
 			it->second.first->push_front(conn);
 			DbPerfC::Pool::free()->Increment();
 		}

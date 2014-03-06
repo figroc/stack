@@ -10,6 +10,7 @@ namespace msvc { namespace cache {
 
 class Cache {
 public:
+	static void Init();
 	static std::auto_ptr<Cache> Get(const std::string &uri);
 
 protected:

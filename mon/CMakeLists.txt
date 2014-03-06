@@ -67,6 +67,7 @@ add_library(db OBJECT
 
 add_library(cache OBJECT 
   "src/cache/Cache.cpp"
+  "src/cache/util/CachePerfC.cpp"
   "src/cache/impl/redis/RedisUri.cpp"
   "src/cache/impl/redis/RedisConnPool.cpp"
   "src/cache/impl/redis/RedisClient.cpp"

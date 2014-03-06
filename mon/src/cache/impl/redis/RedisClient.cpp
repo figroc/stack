@@ -18,8 +18,11 @@ auto_ptr<Cache> RedisClient::Get(const RedisUri &uri)
 string RedisClient::GetStr(const string &key, const string &def)
 {
 	RedisHelper::Call(_conn->ptr(), "GET", key);
+	PerfCounter *perf = _conn->perf();
 	redis_reply_ptr rpl = RedisHelper::Reply(_conn->ptr());
-	return rpl->type == REDIS_REPLY_STRING ? string(rpl->str, rpl->len) : def;
+	bool hit = rpl && (rpl->type == REDIS_REPLY_STRING);
+	_conn->perf()->HitOrMiss(hit);
+	return hit ? string(rpl->str, rpl->len) : def;
 }
 
 vector<string> RedisClient::GetStr(const vector<string> &key)
@@ -27,7 +30,9 @@ vector<string> RedisClient::GetStr(const vector<string> &key)
 	vector<string> val;
 	RedisHelper::Call(_conn->ptr(), "MGET", key);
 	redis_reply_ptr rpl = RedisHelper::Reply(_conn->ptr());
-	if (rpl && rpl->type == REDIS_REPLY_ARRAY) {
+	bool hit = rpl && rpl->type == REDIS_REPLY_ARRAY;
+	_conn->perf()->HitOrMiss(hit);
+	if (hit) {
 		for (int i = 0; i < rpl->elements; ++i) {
 			redisReply *inner = rpl->element[i];
 			if (inner && inner->type == REDIS_REPLY_STRING)

@@ -8,20 +8,29 @@ using namespace std;
 auto_ptr<RedisConnPool::ScopedConnection> RedisConnPool::Fetch(const RedisUri &uri)
 {
 	auto_ptr<ScopedConnection> conn;
+	redis_conn_map::iterator it;
 	{
 		boost::mutex::scoped_lock lock(_lock);
-		redis_conn_map::iterator it = _conns.find(uri.userAtDb());
-		if (it != _conns.end()) {
-			while (!it->second.empty()) {
-				redis_conn_ptr ptr = it->second.front();
-				it->second.pop_front();
-				if (ptr && !(ptr->err)) {
-					conn.reset(new ScopedConnection(shared_from_this(), uri, it->second.front()));
+		it = _conns.find(uri.userAtDb());
+		if (it == _conns.end()) {
+			it = _conns.insert(make_pair(uri.userAtDb(),
+					redis_conn_info(redis_conn_list_ptr(new redis_conn_list_type()),
+									CachePerfC::Fetch(uri.name()))
+					)).first;
+		} else {
+			while (!it->second.first->empty()) {
+				redis_conn_ptr ptr = it->second.first->front();
+				it->second.first->pop_front();
+				CachePerfC::Pool::free()->Decrement();
+				if (!(ptr->err)) {
+					conn.reset(new ScopedConnection(shared_from_this(), uri,
+							it->second.first->front(), it->second.second));
 					break;
 				}
 			}
 		}
 	}
+
 	if (!conn.get()) {
 		redis_conn_ptr ptr(redisConnect(uri.addr().c_str(), uri.port()), &redisFree);
 		if (!ptr)
@@ -37,7 +46,7 @@ auto_ptr<RedisConnPool::ScopedConnection> RedisConnPool::Fetch(const RedisUri &u
 		if (!rpl || rpl->type != REDIS_REPLY_STATUS)
 			throw runtime_error(string("failed to switch to ") + uri.uri());
 
-		conn.reset(new ScopedConnection(shared_from_this(), uri, ptr));
+		conn.reset(new ScopedConnection(shared_from_this(), uri, ptr, it->second.second));
 	}
 	return conn;
 }
@@ -48,9 +57,12 @@ void RedisConnPool::Release(const RedisUri &uri, const redis_conn_ptr &conn)
 		boost::mutex::scoped_lock lock(_lock);
 		redis_conn_map::iterator it = _conns.find(uri.userAtDb());
 		if (it != _conns.end()){
-			while (it->second.size() >= MAX_CONN_IN_POOL)
-				it->second.pop_back();
-			it->second.push_front(conn);
+			while (it->second.first->size() >= MAX_CONN_IN_POOL) {
+				it->second.first->pop_back();
+				CachePerfC::Pool::free()->Decrement();
+			}
+			it->second.first->push_front(conn);
+			CachePerfC::Pool::free()->Increment();
 		}
 	}
 }

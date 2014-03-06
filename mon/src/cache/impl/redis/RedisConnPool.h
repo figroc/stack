@@ -3,17 +3,21 @@
 
 #include "RedisUri.h"
 #include "RedisHelper.h"
+#include "../../util/CachePerfC.h"
 #include <list>
 #include <map>
 #include <memory>
+#include <boost/smart_ptr.hpp>
 #include <boost/thread.hpp>
 
 namespace msvc { namespace cache {
 
 class RedisConnPool : public boost::enable_shared_from_this<RedisConnPool> {
 private:
-	typedef std::list<redis_conn_ptr> redis_conn_list;
-	typedef std::map<std::string, redis_conn_list> redis_conn_map;
+	typedef std::list<redis_conn_ptr> redis_conn_list_type;
+	typedef boost::shared_ptr<redis_conn_list_type> redis_conn_list_ptr;
+	typedef std::pair<redis_conn_list_ptr, PerfCounter *> redis_conn_info;
+	typedef std::map<std::string, redis_conn_info> redis_conn_map;
 
 public:
 	class ScopedConnection {
@@ -22,16 +26,20 @@ public:
 		boost::shared_ptr<RedisConnPool> _pool;
 		RedisUri _uri;
 		redis_conn_ptr _conn;
+		PerfCounter *_perf;
 
 	private:
 		ScopedConnection(const boost::shared_ptr<RedisConnPool> &pool, const RedisUri &uri,
-				const redis_conn_ptr &conn)	: _pool(pool), _uri(uri), _conn(conn) { };
+				const redis_conn_ptr &conn, PerfCounter *const perf)
+			: _pool(pool), _uri(uri), _conn(conn), _perf(perf) {
+			CachePerfC::Pool::used()->Increment();
+		};
 		ScopedConnection(const ScopedConnection &conn);
 		ScopedConnection &operator=(const ScopedConnection &conn);
 	public:
 		~ScopedConnection() {
-			if (!(_conn->err))
-				_pool->Release(_uri, _conn);
+			_pool->Release(_uri, _conn);
+			CachePerfC::Pool::used()->Decrement();
 		};
 
 	public:
@@ -39,10 +47,12 @@ public:
 
 		inline redisContext &operator*() { return *_conn; };
 		inline redisContext *operator->() { return _conn.get(); };
+
+		inline PerfCounter *perf() const { return _perf; };
 	};
 
 private:
-	static const int MAX_CONN_IN_POOL = 100;
+	static const int MAX_CONN_IN_POOL = 300;
 
 public:
 	inline static boost::shared_ptr<RedisConnPool> Create() {
