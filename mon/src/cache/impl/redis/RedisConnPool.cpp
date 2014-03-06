@@ -15,7 +15,7 @@ auto_ptr<RedisConnPool::ScopedConnection> RedisConnPool::Fetch(const RedisUri &u
 		if (it == _conns.end()) {
 			it = _conns.insert(make_pair(uri.userAtDb(),
 					redis_conn_info(redis_conn_list_ptr(new redis_conn_list_type()),
-									CachePerfC::Fetch(uri.name()))
+									CachePerfC::Fetch(uri.host(), uri.name()))
 					)).first;
 		} else {
 			while (!it->second.first->empty()) {

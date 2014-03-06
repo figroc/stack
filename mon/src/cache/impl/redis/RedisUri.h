@@ -28,6 +28,7 @@ public:
 	inline bool valid() const { return _valid; };
 	inline const std::string &pass() const { return _uri.pass(); };
 	inline const std::string &name() const { return _uri.path(); };
+	inline const std::string &host() const { return _uri.host(); };
 	inline const std::string &addr() const { return _addr; };
 	inline int port() const { return _port; };
 

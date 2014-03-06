@@ -39,8 +39,8 @@ private:
 public:
 	inline static void Init() { Pool::Init(); }
 
-	inline static PerfCounter *Fetch(const std::string &db) {
-		const std::string name = "cache^role^" + db;
+	inline static PerfCounter *Fetch(const std::string &host, const std::string &db) {
+		const std::string name = "cache^role^" + host + "^" + db;
 		boost::mutex::scoped_lock lock(_lock);
 		std::map<std::string, PerfCounter *>::iterator
 			it = _perf.find(name);
