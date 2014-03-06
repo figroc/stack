@@ -114,10 +114,11 @@ void RedisClient::SubStrSet(const string &key, const vector<string> &value, cons
 
 vector<string> RedisClient::GetStrArrayReply()
 {
-	vector<string> val;
 	redis_reply_ptr rpl = RedisHelper::Reply(_conn->ptr());
 	bool hit = rpl && rpl->type == REDIS_REPLY_ARRAY;
 	_conn->perf()->HitOrMiss(hit);
+
+	vector<string> val;
 	if (hit) {
 		for (int i = 0; i < rpl->elements; ++i) {
 			redisReply *inner = rpl->element[i];
