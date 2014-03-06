@@ -36,12 +36,16 @@ auto_ptr<RedisConnPool::ScopedConnection> RedisConnPool::Fetch(const RedisUri &u
 		if (!ptr)
 			throw runtime_error(string("failed to connect to ") + uri.uri());
 
-		RedisHelper::Call(ptr, "AUTH", uri.pass());
+		if (!uri.pass().empty())
+			RedisHelper::Call(ptr, "AUTH", uri.pass());
 		RedisHelper::Call(ptr, "SELECT", uri.name());
 
-		redis_reply_ptr rpl = RedisHelper::Reply(ptr);
-		if (!rpl || rpl->type != REDIS_REPLY_STATUS)
-			throw runtime_error(string("failed to auth to ") + uri.uri());
+		redis_reply_ptr rpl;
+		if (!uri.pass().empty()) {
+			rpl = RedisHelper::Reply(ptr);
+			if (!rpl || rpl->type != REDIS_REPLY_STATUS)
+				throw runtime_error(string("failed to auth to ") + uri.uri());
+		}
 		rpl = RedisHelper::Reply(ptr);
 		if (!rpl || rpl->type != REDIS_REPLY_STATUS)
 			throw runtime_error(string("failed to switch to ") + uri.uri());

@@ -11,10 +11,12 @@ using namespace mongo;
 void MongoDbConnPool::Authenticator::onCreate(DBClientBase *const conn)
 {
 	if (conn) {
-		string error;
-		if (!conn->auth(_uri.name(), _uri.user(), _uri.pass(), error, true))
-			throw runtime_error(string("failed to authenticate for: ")
-					.append(_uri.userAtDb()).append(" !").append(error));
+		if (!_uri.name().empty() || !_uri.pass().empty()) {
+			string error;
+			if (!conn->auth(_uri.name(), _uri.user(), _uri.pass(), error, true))
+				throw runtime_error(string("failed to authenticate for: ")
+						.append(_uri.userAtDb()).append(" !").append(error));
+		}
 		_con.fetch_add(1, memory_order_relaxed);
 		DbPerfC::Pool::free()->Increment();
 	}
