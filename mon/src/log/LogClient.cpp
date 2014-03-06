@@ -8,6 +8,7 @@ using namespace std;
 using namespace msvc::log::_di;
 
 boost::atomic_bool LogClient::_init(false);
+string LogClient::_dir;
 TraceQueue< pair<string, string> > LogClient::_queue;
 map< string, boost::shared_ptr<TraceFile> > LogClient::_files;
 
@@ -35,6 +36,7 @@ void LogClient::Writer()
 				it = _files.find(msg->first);
 			if (it == _files.end()) {
 				it = _files.insert(make_pair(msg->first, boost::make_shared<TraceFile>(msg->first, ".csv"))).first;
+				it->second->Switch(_dir);
 			}
 			it->second->Write(msg->second);
 			msg = _queue.Pop();

@@ -28,11 +28,11 @@ void TraceFile::TestSwitch()
 			boost::system::error_code err;
 			boost::filesystem::create_directories(_path, err);
 		}
+		_time = ftt.is_not_a_date_time() ? _file_time_now() : ftt;
 		string filename = _file_name_compose();
 		if (_file.is_open())
 			_file.close();
 		_file.open(filename.c_str(), ios::binary | ios::out | ios::app);
-		_time = ftt.is_not_a_date_time() ? _file_time_now() : ftt;
 		_switch = false;
 	}
 }

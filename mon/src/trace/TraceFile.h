@@ -42,7 +42,7 @@ private:
 		return file_time_t(now.date(), file_hour_t(now.time_of_day().hours(), 0, 0));
 	}
 	inline std::string _file_name_compose() {
-		return _path + _name + '_' + boost::posix_time::to_iso_string(_time) + ".log";
+		return _path + _name + '_' + boost::posix_time::to_iso_string(_time).substr(0, 11) + _fext;
 	}
 };
 

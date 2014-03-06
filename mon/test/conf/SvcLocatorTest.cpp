@@ -35,7 +35,7 @@ void _svc_locator_rr_test(const SvcRole &role, const F &user, const int size, co
 }
 }
 
-BOOST_FIXTURE_TEST_SUITE(SvcLocatorTest, ConfFileFixture)
+BOOST_AUTO_TEST_SUITE(SvcLocatorTest)
 
 BOOST_AUTO_TEST_CASE(LocateRRTest)
 {

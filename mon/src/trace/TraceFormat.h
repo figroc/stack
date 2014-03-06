@@ -11,14 +11,7 @@ namespace msvc { namespace log { namespace _di {
 
 class TraceFormat {
 private:
-	template<typename S, typename V, bool X> struct _helper {
-	inline static void output(S &buffer, const V &val) {
-		buffer << val;
-	};};
-	template<typename S, typename V> struct _helper<S, V, true> {
-	inline static void output(S &buffer, const V &val) {
-		buffer << "\n!!! " << val.what();
-	};};
+	template<bool> struct _helper {	};
 
 private:
 	static const std::string LEVEL_STR[];
@@ -38,7 +31,7 @@ public:
 	TraceFormat &Output(const TraceLevel level, const std::string &file, const int line);
 	template<typename T>
 	inline TraceFormat &operator<<(const T &val) {
-		typedef _helper<std::ostringstream, T, boost::is_base_of<std::exception, T>::value> _stream_t;
+		typedef _helper<boost::is_base_of<std::exception, T>::value> _stream_t;
 		PrepareVal(); _stream_t::output(_buffer, val); return *this;
 	};
 	std::string String();
@@ -47,6 +40,16 @@ private:
 	void PrepareVal();
 
 };
+
+template<> struct TraceFormat::_helper<false> { template<typename S, typename T>
+inline static void output(S &buffer, const T &val) {
+	buffer << val;
+};};
+
+template<> struct TraceFormat::_helper<true> { template<typename S, typename T>
+inline static void output(S &buffer, const T &val) {
+	buffer << "\n!!! " << val.what();
+};};
 
 }}}
 

@@ -14,7 +14,7 @@ namespace {
   const string _USR_[] = { "1", "2" };
 }
 
-BOOST_FIXTURE_TEST_SUITE(SvcSettingTest, ConfFileFixture)
+BOOST_AUTO_TEST_SUITE(SvcSettingTest)
 
 BOOST_AUTO_TEST_CASE(GetUriSvcTest)
 {

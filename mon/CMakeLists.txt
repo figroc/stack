@@ -107,10 +107,15 @@ add_library(conf_test OBJECT
   "test/conf/SvcSettingTest.cpp"
 )
 
+add_library(log_test OBJECT 
+  "test/log/LogTest.cpp"
+)
+
 add_executable(msvc_test 
   "test/TestSuite.cpp" 
   $<TARGET_OBJECTS:util_test> 
   $<TARGET_OBJECTS:conf_test>
+  $<TARGET_OBJECTS:log_test>
 )
 
 target_link_libraries(msvc_test
