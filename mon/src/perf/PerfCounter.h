@@ -20,7 +20,8 @@ public:
 	static const int HINT_DEC = 2;
 	static const int HINT_COUNT = 3;
 	static const int HINT_TIME = 4;
-	static const int HINT_ALL = 7;
+	static const int HINT_HIT = 8;
+	static const int HINT_ALL = 15;
 
 private:
 	typedef boost::atomic_intmax_t atomic_count_t;
@@ -42,6 +43,7 @@ private:
 	atomic_rate_t _rateInc[RATE_DURATION];
 	atomic_rate_t _rateDec[RATE_DURATION];
 	atomic_avg_t _timing;
+	atomic_avg_t _hit;
 
 private:
 	PerfCounter(const std::string &name) : _name(name), _hint(HINT_NONE),
@@ -56,13 +58,15 @@ public:
 	void Increment(const size_t count = 1);
 	void Decrement(const size_t count = 1);
 	void Timing(const boost::chrono::milliseconds &time);
+	void HitOrMiss(const bool hit);
 
 	inline long long Current() const { return (long long)_current.load(boost::memory_order_relaxed); };
 
 	inline double RateOfInc() const { return AvgRate(_rateInc); };
 	inline double RateOfDec() const { return -AvgRate(_rateDec); };
 
-	inline double AvgTime() const { return _timing.first.load(boost::memory_order_relaxed); }
+	inline double AvgTime() const { return _timing.first.load(boost::memory_order_relaxed); };
+	inline double HitRatio() const { return 100.0 * _hit.first.load(boost::memory_order_relaxed) / _hit.second.load(boost::memory_order_relaxed); };
 };
 
 }}

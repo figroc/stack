@@ -21,17 +21,17 @@ void PerfCounter::IncRate(atomic_rate_t (&array)[RATE_DURATION], const size_t co
 double PerfCounter::AvgRate(const atomic_rate_t (&array)[RATE_DURATION])
 {
 	const time_t now = time(NULL);
-	size_t total(0), average(0);
+	size_t total(0), abase(0);
 	for (int i = 0; i < RATE_DURATION; ++i) {
 		const atomic_rate_t &rate(array[i]);
 		if (now - rate.first.load(boost::memory_order_relaxed) <= RATE_DURATION) {
 			total += rate.second.load(boost::memory_order_relaxed);
-			++average;
+			++abase;
 		}
 	}
-	if (0 == average)
+	if (0 == abase)
 		return 0.0;
-	return (double)total / (double)average;
+	return (double)total / (double)abase;
 }
 
 void PerfCounter::Increment(const size_t count)
@@ -57,6 +57,13 @@ void PerfCounter::Timing(const boost::chrono::milliseconds &time)
 	uintmax_t origin = _timing.first.load(boost::memory_order_release);
 	uintmax_t average = (uintmax_t)(origin * fall + incr);
 	_timing.first.fetch_add(average - origin, boost::memory_order_consume);
+}
+
+void PerfCounter::HitOrMiss(const bool hit)
+{
+	_hint |= HINT_HIT;
+	if (hit) _hit.first.fetch_add(1, boost::memory_order_relaxed);
+	_hit.second.fetch_add(1, boost::memory_order_relaxed);
 }
 
 }}

@@ -127,6 +127,8 @@ string PerfMonitor::QueryPerf(const string &name)
 			ss << ",\"d\":" << perf->RateOfDec();
 		if (hint & PerfCounter::HINT_TIME)
 			ss << ",\"t\":" << perf->AvgTime();
+		if (hint & PerfCounter::HINT_HIT)
+			ss << ".\"o\":" << perf->HitRatio();
 	}
 	ss << "}\r\n]}";
 	return ss.str();
