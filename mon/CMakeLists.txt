@@ -87,6 +87,7 @@ target_link_libraries(msvc
   boost_system
   boost_chrono
   boost_thread
+  boost_date_time
   boost_program_options
   cppnetlib-uri
   cppnetlib-server-parsers
@@ -95,8 +96,9 @@ target_link_libraries(msvc
 )
 
 add_library(util_test OBJECT
-  "test/util/StringUtilTest.cpp" 
+  "test/util/StringTest.cpp" 
   "test/util/NetworkTest.cpp"
+  "test/util/UriTest.cpp"
 )
 
 add_library(conf_test OBJECT 

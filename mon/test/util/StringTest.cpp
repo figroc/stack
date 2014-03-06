@@ -1,6 +1,5 @@
 #include <boost/test/unit_test.hpp>
 #include "../../incl/util/util.h"
-#include <boost/network/uri.hpp>
 
 namespace msvc { namespace test {
 
@@ -18,7 +17,7 @@ namespace {
 	const int _AsIntegers_[] = { 1, 2, 3, 5, 6, 7 };
 }
 
-BOOST_AUTO_TEST_SUITE(StringUtilTest)
+BOOST_AUTO_TEST_SUITE(StringTest)
 
 BOOST_AUTO_TEST_CASE(StringCastIntegerTest)
 {
