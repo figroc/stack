@@ -97,40 +97,19 @@ target_link_libraries(msvc
   hiredis
 )
 
-add_library(util_test OBJECT
+add_executable(test 
+  "test/TestSuite.cpp" 
   "test/util/StringTest.cpp" 
   "test/util/NetworkTest.cpp"
   "test/util/UriTest.cpp"
-)
-
-add_library(conf_test OBJECT 
   "test/conf/SvcLocatorTest.cpp"
   "test/conf/SvcSettingTest.cpp"
-)
-
-add_library(log_test OBJECT 
   "test/log/LogTest.cpp"
-)
-
-add_library(db_test OBJECT
   "test/db/DatabaseTest.cpp"
-)
-
-add_library(cache_test OBJECT
   "test/cache/CacheTest.cpp"
 )
 
-add_executable(msvc_test 
-  "test/TestSuite.cpp" 
-  $<TARGET_OBJECTS:util_test> 
-  $<TARGET_OBJECTS:conf_test>
-  $<TARGET_OBJECTS:log_test>
-  $<TARGET_OBJECTS:db_test>
-  $<TARGET_OBJECTS:cache_test>
-)
-
-target_link_libraries(msvc_test
-  msvc 
-  boost_unit_test_framework
+target_link_libraries(test
+  msvc boost_unit_test_framework
 )
 

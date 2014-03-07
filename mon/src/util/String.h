@@ -14,13 +14,10 @@
 namespace msvc { namespace util { namespace _di {
 
 template<typename T>
-inline bool StringCast(const std::string &str, T &val)
-{
-	return false;
-}
+inline bool StringCastPreempt(const std::string &str, T &val) {	return false; }
 
 template<>
-bool StringCast<bool>(const std::string &str, bool &val);
+bool StringCastPreempt<bool>(const std::string &str, bool &val);
 
 }}}
 
@@ -32,7 +29,7 @@ bool StringCastTry(const std::string &str, T &val)
 	if (str.empty())
 		return false;
 
-	if (!_di::StringCast(str, val)) try {
+	if (!_di::StringCastPreempt(str, val)) try {
 		val = boost::lexical_cast<T>(str);
 	} catch (const boost::bad_lexical_cast &ex) {
 		return false;
@@ -58,6 +55,11 @@ std::vector<T> StringSplit(const std::string &str, const std::string &del, const
 
 template<>
 std::vector<std::string> StringSplit<std::string>(const std::string &str, const std::string &del, const bool cpt);
+
+// find a basic ascii char in a utf-8 encoded string
+int StringFind(const std::string &str, const char c, const size_t i = 0);
+// replace a basic ascii char in a utf-8 encoded string
+std::string StringReplace(const std::string &str, const char c, const std::string &rpl, const size_t i = 0);
 
 }}
 

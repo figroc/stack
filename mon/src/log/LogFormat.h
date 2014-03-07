@@ -3,10 +3,12 @@
 
 #include <string>
 #include <sstream>
-#include <boost/algorithm/string.hpp>
 #include <boost/date_time.hpp>
+#include "incl/util/util.h"
 
 namespace msvc { namespace log { namespace _di {
+
+using namespace msvc::util;
 
 class LogFormat {
 private:
@@ -29,9 +31,9 @@ private:
 	}
 	template<typename S>
 	inline static void _output(S &buffer, const std::string &val) {
-		int c(val.find(',')), q(val.find('"'));
+		size_t c(StringFind(val, ',')), q(StringFind(val, '"'));
 		if (q != std::string::npos)
-			buffer << '"' << boost::replace_all_copy(val, "\"", "\"\"") << '"';
+			buffer << '"' << StringReplace(val, '"', "\"\"", q) << '"';
 		else if (c != std::string::npos)
 			buffer << '"' << val << '"';
 		else
