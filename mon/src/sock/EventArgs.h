@@ -4,7 +4,7 @@
 #include <boost/smart_ptr.hpp>
 #include <boost/pointer_cast.hpp>
 
-namespace msvc { namespace stack {
+namespace msvc { namespace sock {
 
 typedef boost::shared_ptr<void> StatePtr;
 

@@ -1,19 +1,18 @@
 #ifndef STACK_THREAD_POOL_H
 #define STACK_THREAD_POOL_H
 
+#define TIME_UTC 1
 #include <boost/threadpool.hpp>
 
-using namespace boost::threadpool;
-
-namespace msvc { namespace stack {
+namespace msvc { namespace sock {
 
 class ThreadPool {
 public:
-	typedef pool::task_type task_type;
+	typedef boost::threadpool::pool::task_type task_type;
 
 private:
-	static pool _io;
-	static pool _worker;
+	static boost::threadpool::pool _io;
+	static boost::threadpool::pool _worker;
 
 public:
 	inline static bool ScheduleIO(const task_type &task) { return _io.schedule(task); }

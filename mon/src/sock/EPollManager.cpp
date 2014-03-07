@@ -2,7 +2,7 @@
 #include <boost/thread/thread.hpp>
 #include "EPollManager.h"
 
-namespace msvc { namespace stack {
+namespace msvc { namespace sock {
 
 using namespace std;
 using namespace boost;

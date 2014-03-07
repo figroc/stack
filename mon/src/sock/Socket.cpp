@@ -3,28 +3,30 @@
 #include <exception>
 #include <iostream>
 #include <boost/chrono/duration.hpp>
-#include <boost/thread/thread.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include "Socket.h"
 #include "EPollManager.h"
-#include "log/log_export.h"
+#include "incl/log/log.h"
 
-namespace msvc { namespace stack {
+namespace msvc { namespace sock {
 
 using namespace std;
 using namespace boost;
+using namespace boost::asio;
+using namespace boost::chrono;
 using namespace msvc::log;
 
 atomic_bool Socket::_init(false);
 mutex Socket::_lock;
 list< pair<int, time_t> > Socket::_closing;
-shared_ptr<PerfCounter> Socket::_perfQsfd;
-shared_ptr<PerfCounter> Socket::_perfQsnd;
-shared_ptr<PerfCounter> Socket::_perfAccept;
-shared_ptr<PerfCounter> Socket::_perfConnect;
-shared_ptr<PerfCounter> Socket::_perfRecv;
-shared_ptr<PerfCounter> Socket::_perfSend;
+
+PerfCounter *Socket::_perfQsfd = 0;
+PerfCounter *Socket::_perfQsnd = 0;
+PerfCounter *Socket::_perfAccept = 0;
+PerfCounter *Socket::_perfConnect = 0;
+PerfCounter *Socket::_perfRecv = 0;
+PerfCounter *Socket::_perfSend = 0;
 
 void Socket::Init()
 {
@@ -52,10 +54,10 @@ void Socket::ClosePendingFD()
 {
 	// close sockfd after TIME_TO_CLOSE seconds
 #ifdef LOCAL_DEBUG
-	static const chrono::seconds interval(5);
+	static const seconds interval(5);
 	static const int TIME_TO_CLOSE = 15;
 #else
-	static const chrono::seconds interval(15);
+	static const seconds interval(15);
 	static const int TIME_TO_CLOSE = 45;
 #endif
 	while (true) try {
@@ -75,7 +77,7 @@ void Socket::ClosePendingFD()
 			}
 		}
 	} catch (const std::exception &e) {
-		LC_TRACE_ERROR("error closing sockfd: %s", e.what());
+		LC_TRACE_ERROR("error closing sockfd", e);
 	}
 }
 
@@ -157,7 +159,7 @@ struct sockaddr_storage Socket::ParseSockAddr(const string &endpoint)
 	struct sockaddr_storage addr = {0};
 	const pair<string, string> serv = ParseEndpoint(endpoint);
 	if (serv.first.empty() || serv.second.empty()) {
-		LC_TRACE_ERROR("invalid endpoint %s", endpoint.c_str());
+		LC_TRACE_ERROR("invalid endpoint %%", endpoint);
 		return addr;
 	}
 
@@ -169,7 +171,7 @@ struct sockaddr_storage Socket::ParseSockAddr(const string &endpoint)
 	int status(0);
 	struct addrinfo *host(0);
 	if (0 != (status = ::getaddrinfo(serv.first.c_str(), serv.second.c_str(), &hint, &host))) {
-		LC_TRACE_ERROR("invalid endpoint %s: %s", endpoint.c_str(), ::gai_strerror(status));
+		LC_TRACE_ERROR("invalid endpoint %%: %%", endpoint, ::gai_strerror(status));
 		return addr;
 	}
 
@@ -244,7 +246,7 @@ void Socket::Listen(const string &localEP)
 	_listening = true;
 	_sock = sock;
 	_localEP = localEP;
-	LC_TRACE_WARN("Socket::Listen[%d] | listening on %s", _sock, _localEP.c_str());
+	LC_TRACE_WARN("Socket::Listen[%%] | listening on %%", _sock, _localEP);
 }
 
 shared_ptr<Socket> Socket::CheckAlive(const bool user)
@@ -270,8 +272,8 @@ bool Socket::AcceptAttempt(const bool user, const CtxAcceptCallback &ctx)
 	do {
 		sock = ::accept(_sock, (struct sockaddr*)&addr, &size);
 		err = -1 == sock ? errno : 0;
-		LC_TRACE_DEBUG("Socket::AcceptAttempt[%d:L%s] | accept result %d: %s",
-				_sock, _localEP.c_str(), sock, strerror(err));
+		LC_TRACE_DEBUG("Socket::AcceptAttempt[%%:L%%] | accept result %%: %%",
+				_sock, _localEP, sock, ::strerror(err));
 
 		if(0 != err) {
 			if (-1 != sock) {
@@ -317,11 +319,11 @@ void Socket::AcceptCallback(const int err, const int sock, const CtxAcceptCallba
 		socket->_remoteEP = GetSockAddr(sock, false);
 		socket->_sock = Socket::InitSockFD(sock);
 
-		LC_TRACE_DEBUG("Socket::AcceptCallback[%d:L%s-R%s] | created from %d",
-				sock, socket->_localEP.c_str(), socket->_remoteEP.c_str(), _sock);
+		LC_TRACE_DEBUG("Socket::AcceptCallback[%%:L%%-R%%] | created from %%",
+				sock, socket->_localEP, socket->_remoteEP, _sock);
 	} catch (const std::exception &e) {
-		LC_TRACE_WARN("Socket::AcceptCallback[%d:L%s-R%s] | creating from %d: %s",
-				sock, socket->_localEP.c_str(), socket->_remoteEP.c_str(), _sock, e.what());
+		LC_TRACE_WARN("Socket::AcceptCallback[%%:L%%-R%%] | creating from %%",
+				sock, socket->_localEP, socket->_remoteEP, _sock, e);
 		socket.reset();
 	} else {
 		socket.reset();
@@ -330,8 +332,8 @@ void Socket::AcceptCallback(const int err, const int sock, const CtxAcceptCallba
 	if (ctx.callback().callable()) try {
 		ctx.callback()(_ref.lock(), socket ? AcceptEventArgs(socket) : AcceptEventArgs(err), ctx.state());
 	} catch (const std::exception &e) {
-		LC_TRACE_WARN("Socket::AcceptCallback[%d:L%s-R%s] | error invoking callback: %s",
-			sock, _localEP.c_str(), socket->_remoteEP.c_str(), e.what());
+		LC_TRACE_WARN("Socket::AcceptCallback[%%:L%%-R%%] | error invoking callback",
+			sock, _localEP, socket->_remoteEP, e);
 	}
 }
 
@@ -391,22 +393,21 @@ void Socket::ConnectCallback(const int err, const int sock, const string &remote
 		_remoteEP = remote;
 		_sock = sock;
 	}
-	LC_TRACE_DEBUG("Socket::ConnectCallback[%d:L%s-R%s] | connect result: %s",
-		sock, _localEP.c_str(), remote.c_str(), strerror(err));
+	LC_TRACE_DEBUG("Socket::ConnectCallback[%%:L%%-R%%] | connect result: %%",
+		sock, _localEP, remote, ::strerror(err));
 
 	_connecting.store(false, memory_order_relaxed);
 
 	if (ctx.callback().callable()) try {
 		ctx.callback()(_ref.lock(), -1 == sock ? ConnectEventArgs(remote) : ConnectEventArgs(err), ctx.state());
 	} catch (const std::exception &e) {
-		LC_TRACE_WARN("Socket::ConnectCallback[%d:L%s-R%s] | error invoking callback: %s",
-			sock, _localEP.c_str(), remote.c_str(), e.what());
+		LC_TRACE_WARN("Socket::ConnectCallback[%%:L%%-R%%] | error invoking callback",
+			sock, _localEP, remote, e);
 	}
 }
 
-bool Socket::RecvAsync(BufferNode &data, const FnRecvCallback &callback, const StatePtr &state)
+bool Socket::RecvAsync(DataBuffer &data, const FnRecvCallback &callback, const StatePtr &state)
 {
-	data.action(0);
 	if (-1 == _sock)
 		throw logic_error("socket not bound yet");
 	if (_listening)
@@ -416,21 +417,22 @@ bool Socket::RecvAsync(BufferNode &data, const FnRecvCallback &callback, const S
 	return RecvAttempt(true, data, CtxRecvCallback(callback, state));
 }
 
-bool Socket::RecvAttempt(const bool user, BufferNode &data, const CtxRecvCallback &ctx)
+bool Socket::RecvAttempt(const bool user, DataBuffer &data, const CtxRecvCallback &ctx)
 {
 	int size(0), err(-1);
 	do {
-		size = ::recv(_sock, data.bytesOffset(), data.size(), 0);
+		DataBuffer::element_type::mutable_buffers_type buf = data->prepare(1500);
+		size = ::recv(_sock, buffer_cast<void *>(buf), buffer_size(buf), 0);
 		err = size < 0 ? errno : 0;
-		LC_TRACE_DEBUG("Socket::RecvAsync[%d:L%s-R%s] | read %d bytes: %s",
-				_sock, _localEP.c_str(), _remoteEP.c_str(), size, strerror(err));
+		LC_TRACE_DEBUG("Socket::RecvAsync[%%:L%%-R%%] | read %% bytes: %%",
+				_sock, _localEP, _remoteEP, size, ::strerror(err));
 
 		if (0 != err) {
 			if (WouldBlock(err)) {
 				shared_ptr<Socket> pin = CheckAlive(user);
 				if (pin && EPollManager::Watch(EPM_READ, _sock,
 						make_functor(&Socket::RecvReady, pin, true),
-						make_shared< pair<BufferNode, CtxRecvCallback> >(data, ctx)))
+						make_shared< pair<DataBuffer, CtxRecvCallback> >(data, ctx)))
 					return true;
 			}
 			if (RetryRecv(err))
@@ -439,7 +441,7 @@ bool Socket::RecvAttempt(const bool user, BufferNode &data, const CtxRecvCallbac
 		} else {
 			_perfRecv->Increment();
 		}
-		data.action(size);
+		data->commit(size);
 		break;
 	} while(true);
 
@@ -449,31 +451,29 @@ bool Socket::RecvAttempt(const bool user, BufferNode &data, const CtxRecvCallbac
 
 void Socket::RecvReady(const bool event, const int sock, const StatePtr &state)
 {
-	pair<BufferNode, CtxRecvCallback>
-		*ctx = reinterpret_cast<pair<BufferNode, CtxRecvCallback> *>(state.get());
+	pair<DataBuffer, CtxRecvCallback>
+		*ctx = reinterpret_cast<pair<DataBuffer, CtxRecvCallback> *>(state.get());
 	if (event) {
 		RecvAttempt(false, ctx->first, ctx->second);
 	} else {
-		ctx->first.action(0);
 		RecvCallback(ctx->first, ctx->second);
 	}
 }
 
-void Socket::RecvCallback(BufferNode &data, const CtxRecvCallback &ctx)
+void Socket::RecvCallback(DataBuffer &data, const CtxRecvCallback &ctx)
 {
 	_recving.store(false, memory_order_relaxed);
 
 	if (ctx.callback().callable()) try {
 		ctx.callback()(_ref.lock(), RecvEventArgs(data), ctx.state());
 	} catch (const std::exception &e) {
-		LC_TRACE_WARN("Socket::RecvCallback[%d:L%s-R%s] | error invoking callback: %s",
-			_sock, _localEP.c_str(), _remoteEP.c_str(), e.what());
+		LC_TRACE_WARN("Socket::RecvCallback[%%:L%%-R%%] | error invoking callback",
+			_sock, _localEP, _remoteEP, e);
 	}
 }
 
-bool Socket::SendAsync(BufferNode &data, const FnSendCallback &callback, const StatePtr &state)
+bool Socket::SendAsync(DataBuffer &data, const FnSendCallback &callback, const StatePtr &state)
 {
-	data.action(0);
 	if (-1 == _sock)
 		throw logic_error("socket not bound yet");
 	if (_listening)
@@ -493,21 +493,22 @@ bool Socket::SendAsync(BufferNode &data, const FnSendCallback &callback, const S
 	return attempt ? SendAttempt(true, data, CtxSendCallback(callback, state)) : false;
 }
 
-bool Socket::SendAttempt(const bool user, BufferNode &data, const CtxSendCallback &ctx)
+bool Socket::SendAttempt(const bool user, DataBuffer &data, const CtxSendCallback &ctx)
 {
 	int size(0), err(-1);
-	do {
-		size = ::send(_sock, data.bytesOffset() + data.action(), data.size() - data.action(), 0);
+	DataBuffer::element_type::const_buffers_type buf = data->data();
+	if (buffer_size(buf) > 0) do {
+		size = ::send(_sock, buffer_cast<const void *>(buf), buffer_size(buf), 0);
 		err = size < 0 ? errno : 0;
-		LC_TRACE_DEBUG("Socket::SendAttempt[%d:L%s-R%s] | send %d bytes: %s",
-				_sock, _localEP.c_str(), _remoteEP.c_str(), size, strerror(err));
+		LC_TRACE_DEBUG("Socket::SendAttempt[%%:L%%-R%%] | send %% bytes: %%",
+				_sock, _localEP, _remoteEP, size, ::strerror(err));
 
 		if (0 != err) {
 			if (WouldBlock(err)) {
 				shared_ptr<Socket> pin = CheckAlive(user);
 				if (pin && EPollManager::Watch(EPM_WRITE, _sock,
 						make_functor(&Socket::SendReady, pin, true),
-						make_shared< pair<BufferNode, CtxSendCallback> >(data, ctx)))
+						make_shared< pair<DataBuffer, CtxSendCallback> >(data, ctx)))
 					return true;
 			}
 			if (RetrySend(err))
@@ -516,8 +517,9 @@ bool Socket::SendAttempt(const bool user, BufferNode &data, const CtxSendCallbac
 		} else {
 			_perfSend->Increment();
 		}
-		data.action(data.action() + size);
-	} while (size > 0 && data.action() < data.size());
+		data->consume(size);
+		buf = data->data();
+	} while (size > 0 && buffer_size(buf) > 0);
 
 	SendCallback(data, ctx);
 	return false;
@@ -525,8 +527,8 @@ bool Socket::SendAttempt(const bool user, BufferNode &data, const CtxSendCallbac
 
 void Socket::SendReady(const bool event, const int sock, const StatePtr &state)
 {
-	pair<BufferNode, CtxSendCallback>
-		*ctx = reinterpret_cast<pair<BufferNode, CtxSendCallback> *>(state.get());
+	pair<DataBuffer, CtxSendCallback>
+		*ctx = reinterpret_cast<pair<DataBuffer, CtxSendCallback> *>(state.get());
 	if (event) {
 		SendAttempt(false, ctx->first, ctx->second);
 	} else {
@@ -534,17 +536,17 @@ void Socket::SendReady(const bool event, const int sock, const StatePtr &state)
 	}
 }
 
-void Socket::SendCallback(BufferNode &data, const CtxSendCallback &ctx)
+void Socket::SendCallback(DataBuffer &data, const CtxSendCallback &ctx)
 {
 	if (ctx.callback().callable()) try {
 		ctx.callback()(_ref.lock(), SendEventArgs(data), ctx.state());
 	} catch (const std::exception &e) {
-		LC_TRACE_WARN("Socket::SendCallback[%d:L%s-R%s] | error invoking callback: %s",
-			_sock, _localEP.c_str(), _remoteEP.c_str(), e.what());
+		LC_TRACE_WARN("Socket::SendCallback[%%:L%%-R%%] | error invoking callback",
+			_sock, _localEP, _remoteEP, e);
 	}
 
 	bool attempt = false;
-	pair<BufferNode, CtxSendCallback> next;
+	pair<DataBuffer, CtxSendCallback> next;
 	{
 		mutex::scoped_lock lock(_sending);
 		_queue.pop_front();

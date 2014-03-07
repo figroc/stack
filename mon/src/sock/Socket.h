@@ -8,15 +8,16 @@
 #include <list>
 #include <boost/smart_ptr.hpp>
 #include <boost/atomic.hpp>
+#include <boost/thread.hpp>
 #include <boost/circular_buffer.hpp>
-#include <boost/thread/mutex.hpp>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/streambuf.hpp>
 
 #include "EventArgs.h"
-#include "BufferNode.h"
-#include "util/util_export.h"
-#include "perf/perf_export.h"
+#include "incl/util/util.h"
+#include "incl/perf/perf.h"
 
-namespace msvc { namespace stack {
+namespace msvc { namespace sock {
 
 using namespace msvc::util;
 using namespace msvc::perf;
@@ -27,12 +28,12 @@ private:
 	static boost::mutex _lock;
 	static std::list< std::pair<int, time_t> > _closing;
 
-	static boost::shared_ptr<PerfCounter> _perfQsfd;
-	static boost::shared_ptr<PerfCounter> _perfQsnd;
-	static boost::shared_ptr<PerfCounter> _perfAccept;
-	static boost::shared_ptr<PerfCounter> _perfConnect;
-	static boost::shared_ptr<PerfCounter> _perfRecv;
-	static boost::shared_ptr<PerfCounter> _perfSend;
+	static PerfCounter *_perfQsfd;
+	static PerfCounter *_perfQsnd;
+	static PerfCounter *_perfAccept;
+	static PerfCounter *_perfConnect;
+	static PerfCounter *_perfRecv;
+	static PerfCounter *_perfSend;
 
 public:
 	static void Init();
@@ -79,6 +80,9 @@ public:
 	virtual ~Socket();
 
 public:
+	typedef boost::shared_ptr<boost::asio::streambuf> DataBuffer;
+
+public:
 	inline bool IsBound() const { return -1 != _sock; }
 	inline std::string GetLocalEP() const { return _localEP; }
 	inline std::string GetRemoteEP() const { return _remoteEP; }
@@ -93,13 +97,13 @@ public:
 	typedef SafeFunctor<void (const boost::shared_ptr<Socket> &, ConnectEventArgs, const StatePtr &)> FnConnectCallback;
 	bool ConnectAsync(const std::string &remote, const FnConnectCallback &callback, const StatePtr &state = StatePtr());
 
-	typedef IoEventArgs<BufferNode> RecvEventArgs;
+	typedef IoEventArgs<DataBuffer> RecvEventArgs;
 	typedef SafeFunctor<void (const boost::shared_ptr<Socket> &, RecvEventArgs, const StatePtr &)> FnRecvCallback;
-	bool RecvAsync(BufferNode &data, const FnRecvCallback &callback, const StatePtr &state = StatePtr());
+	bool RecvAsync(DataBuffer &data, const FnRecvCallback &callback, const StatePtr &state = StatePtr());
 
-	typedef IoEventArgs<BufferNode> SendEventArgs;
+	typedef IoEventArgs<DataBuffer> SendEventArgs;
 	typedef SafeFunctor<void (const boost::shared_ptr<Socket> &, RecvEventArgs, const StatePtr &)> FnSendCallback;
-	bool SendAsync(BufferNode &data, const FnSendCallback &callback, const StatePtr &state = StatePtr());
+	bool SendAsync(DataBuffer &data, const FnSendCallback &callback, const StatePtr &state = StatePtr());
 
 private:
 	boost::shared_ptr<Socket> CheckAlive(const bool callback);
@@ -112,20 +116,20 @@ private:
 	typedef CallbackContext<FnConnectCallback> CtxConnectCallback;
 	bool ConnectAttempt(const std::string &remote, const CtxConnectCallback &ctx);
 	void ConnectReady(const bool event, const int sock, const StatePtr &state);
-	void ConnectCallback(const int err, const int sock, const string &remote, const CtxConnectCallback &ctx);
+	void ConnectCallback(const int err, const int sock, const std::string &remote, const CtxConnectCallback &ctx);
 
 	typedef CallbackContext<FnRecvCallback> CtxRecvCallback;
-	bool RecvAttempt(const bool user, BufferNode &data, const CtxRecvCallback &ctx);
+	bool RecvAttempt(const bool user, DataBuffer &data, const CtxRecvCallback &ctx);
 	void RecvReady(const bool event, const int sock, const StatePtr &state);
-	void RecvCallback(BufferNode &data, const CtxRecvCallback &ctx);
+	void RecvCallback(DataBuffer &data, const CtxRecvCallback &ctx);
 
 	typedef CallbackContext<FnSendCallback> CtxSendCallback;
-	bool SendAttempt(const bool user, BufferNode &data, const CtxSendCallback &ctx);
+	bool SendAttempt(const bool user, DataBuffer &data, const CtxSendCallback &ctx);
 	void SendReady(const bool event, const int sock, const StatePtr &state);
-	void SendCallback(BufferNode &data, const CtxSendCallback &ctx);
+	void SendCallback(DataBuffer &data, const CtxSendCallback &ctx);
 
 private:
-	boost::circular_buffer< std::pair<BufferNode, CtxSendCallback> > _queue;
+	boost::circular_buffer< std::pair<DataBuffer, CtxSendCallback> > _queue;
 
 };
 

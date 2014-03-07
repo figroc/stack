@@ -5,15 +5,15 @@
 #include <boost/lexical_cast.hpp>
 #include "EPollWatcher.h"
 #include "ThreadPool.h"
-#include "log/log_export.h"
+#include "incl/log/log.h"
 
-namespace msvc { namespace stack {
+namespace msvc { namespace sock {
 
 using namespace std;
 using namespace boost;
 using namespace msvc::log;
 
-shared_ptr<PerfCounter> EPollWatcher::_iot;
+PerfCounter *EPollWatcher::_iot = 0;
 atomic_uint EPollWatcher::_idx(0);
 
 void EPollWatcher::Init()
@@ -27,7 +27,7 @@ void EPollWatcher::ThreadPoolWorker(const bool event, const int fd, const CtxEve
 	if (ctx.callback().callable()) try {
 		ctx.callback()(event, fd, ctx.state());
 	} catch (const std::exception &e) {
-		LC_TRACE_WARN("error invoking epoll callback: %s", e.what());
+		LC_TRACE_WARN("error invoking epoll callback", e);
 	}
 }
 
@@ -68,7 +68,7 @@ void EPollWatcher::WaitOnEvent()
 	//   it's designed for running on a separated thread,
 	//   the 'this' object maybe get deleted during the looping
 	const int epoll = _epoll;
-	const shared_ptr<PerfCounter> perf = _perf;
+	PerfCounter *const perf = _perf;
 
 	// maybe LEAKING:
 	//   every events MUST get called on closing epoll fd,
@@ -80,7 +80,7 @@ void EPollWatcher::WaitOnEvent()
 			const int err = errno;
 			if (EINTR == err || EAGAIN == err)
 				continue;
-			LC_TRACE_FATAL("failed on epoll_wait: %s", strerror(err));
+			LC_TRACE_FATAL("failed on epoll_wait: %%", ::strerror(err));
 			break;
 		}
 
@@ -96,7 +96,7 @@ void EPollWatcher::WaitOnEvent()
 					ThreadPool::ScheduleIO(boost::bind(&EPollWatcher::ThreadPoolWorker,
 							!error, ctx->first, ctx->second));
 				} catch (const std::exception &e) {
-					LC_TRACE_WARN("error scheduling epoll callback: %s", e.what());
+					LC_TRACE_WARN("error scheduling epoll callback", e);
 				} else {
 					remove = true;
 				}
@@ -116,7 +116,7 @@ void EPollWatcher::Initialize()
 {
 	_epoll = ::epoll_create(102400);
 	if (-1 == _epoll)
-		throw runtime_error(string("failed to create epoll: %s") + ::strerror(errno));
+		throw runtime_error(string("failed to create epoll: ") + ::strerror(errno));
 	_perf = PerfManager::Fetch(string("epoll^event^")
 				+ lexical_cast<string>(_idx.fetch_add(1, memory_order_relaxed))
 			);
@@ -125,7 +125,7 @@ void EPollWatcher::Initialize()
 void EPollWatcher::TearDown()
 {
 	if (-1 != _epoll) {
-		LC_TRACE_FATAL("closing epoll fd: %d(%ld)", _epoll, _perf->Current());
+		LC_TRACE_FATAL("closing epoll fd: %%(%%)", _epoll, _perf->Current());
 		::close(_epoll);
 	}
 	_epoll = -1;

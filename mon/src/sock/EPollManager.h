@@ -7,9 +7,9 @@
 #include <boost/smart_ptr.hpp>
 #include <boost/scoped_array.hpp>
 #include "EPollWatcher.h"
-#include "util/util_export.h"
+#include "incl/util/util.h"
 
-namespace msvc { namespace stack {
+namespace msvc { namespace sock {
 
 using namespace msvc::util;
 

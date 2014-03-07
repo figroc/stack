@@ -73,6 +73,13 @@ add_library(cache OBJECT
   "src/cache/impl/redis/RedisClient.cpp"
 )
 
+add_library(sock OBJECT
+  "src/sock/ThreadPool.cpp"
+  "src/sock/EPollWatcher.cpp"
+  "src/sock/EPollManager.cpp"
+  "src/sock/Socket.cpp"
+)
+
 add_library(msvc STATIC
   "src/mon.cpp"
   $<TARGET_OBJECTS:util>
@@ -82,6 +89,7 @@ add_library(msvc STATIC
   $<TARGET_OBJECTS:log>
   $<TARGET_OBJECTS:db>
   $<TARGET_OBJECTS:cache>
+  $<TARGET_OBJECTS:sock>
 )
 
 target_link_libraries(msvc

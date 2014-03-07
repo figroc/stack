@@ -6,10 +6,10 @@
 #include <boost/atomic.hpp>
 #include <boost/smart_ptr.hpp>
 #include "EventArgs.h"
-#include "util/util_export.h"
-#include "perf/perf_export.h"
+#include "incl/util/util.h"
+#include "incl/perf/perf.h"
 
-namespace msvc { namespace stack {
+namespace msvc { namespace sock {
 
 using namespace msvc::util;
 using namespace msvc::perf;
@@ -22,7 +22,7 @@ private:
 	static const uint32_t EPOLL_ERROR = EPOLLHUP | EPOLLERR;
 	static const uint32_t EPOLL_DEFAULT = EPOLLET | EPOLLONESHOT | EPOLL_ERROR;
 
-	static boost::shared_ptr<PerfCounter> _iot;
+	static PerfCounter *_iot;
 	static boost::atomic_uint _idx;
 
 public:
@@ -33,7 +33,7 @@ private:
 
 private:
 	int _epoll;
-	boost::shared_ptr<PerfCounter> _perf;
+	PerfCounter *_perf;
 
 public:
 	EPollWatcher() : _epoll(-1) { Initialize(); }
