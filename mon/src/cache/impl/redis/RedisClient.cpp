@@ -133,8 +133,9 @@ vector<string> RedisClient::GetStrArrayReply()
 	if (hit) {
 		for (int i = 0; i < rpl->elements; ++i) {
 			redisReply *inner = rpl->element[i];
-			if (inner && inner->type == REDIS_REPLY_STRING)
-				val.push_back(string(rpl->str, rpl->len));
+			if (inner && inner->type == REDIS_REPLY_STRING) {
+				val.push_back(string(inner->str, inner->len));
+			}
 		}
 	}
 	return val;

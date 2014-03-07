@@ -87,8 +87,8 @@ BOOST_AUTO_TEST_CASE(RedisTest)
 	auto_ptr<Cache> cache = Cache::Get("redis://:@127.0.0.1:6379/1");
 	BOOST_REQUIRE(cache.get());
 
-	//_cache_single_test(cache);
-	//_cache_set_test(cache);
+	_cache_single_test(cache);
+	_cache_set_test(cache);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
