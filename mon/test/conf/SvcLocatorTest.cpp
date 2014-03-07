@@ -1,7 +1,8 @@
 #include <boost/test/unit_test.hpp>
-#include "ConfFileFixture.h"
 #include <boost/lambda/lambda.hpp>
 #include <boost/chrono.hpp>
+#include "incl/conf/conf.h"
+#include "ConfFileFixture.h"
 
 namespace msvc { namespace test {
 

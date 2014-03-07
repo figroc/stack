@@ -11,7 +11,7 @@ private:
 	static boost::shared_ptr<RedisConnPool> _pool;
 
 public:
-	static std::auto_ptr<Cache> Get(const RedisUri &uri);
+	static std::auto_ptr<Cache> Get(const Uri &uri);
 
 private:
 	RedisUri _uri;
@@ -26,6 +26,7 @@ private:
 
 public:
 	virtual void Drop(const std::string &key);
+	virtual void Drop(const std::vector<std::string> &key);
 
 	virtual std::string GetStr(const std::string &key, const std::string &def = std::string());
 	virtual std::vector<std::string> GetStr(const std::vector<std::string> &key);

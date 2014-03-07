@@ -1,4 +1,5 @@
 #include <boost/test/unit_test.hpp>
+#include "incl/conf/conf.h"
 #include "ConfFileFixture.h"
 
 namespace msvc { namespace test {

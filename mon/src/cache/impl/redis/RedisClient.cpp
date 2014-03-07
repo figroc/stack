@@ -10,15 +10,26 @@ using namespace msvc::util;
 
 boost::shared_ptr<RedisConnPool> RedisClient::_pool(RedisConnPool::Create());
 
-auto_ptr<Cache> RedisClient::Get(const RedisUri &uri)
+auto_ptr<Cache> RedisClient::Get(const Uri &uri)
 {
-	return auto_ptr<Cache>(new RedisClient(uri));
+	RedisUri info(uri);
+	if (!info.valid())
+		throw logic_error(std::string("invalid redis uri: ").append(uri.uri()));
+	return auto_ptr<Cache>(new RedisClient(info));
 }
 
 void RedisClient::Drop(const string &key)
 {
 	RedisHelper::Call(_conn->ptr(), "DEL", key);
 	RedisHelper::Reply(_conn->ptr());
+}
+
+void RedisClient::Drop(const vector<string> &key)
+{
+	for (int i = 0; i < key.size(); ++i)
+		RedisHelper::Call(_conn->ptr(), "DEL", key[i]);
+	for (int i = 0; i < key.size(); ++i)
+		RedisHelper::Reply(_conn->ptr());
 }
 
 string RedisClient::GetStr(const string &key, const string &def)

@@ -5,8 +5,8 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include "../../incl/util/util.h"
-#include "../../incl/conf/conf.h"
+#include "incl/util/util.h"
+#include "incl/conf/conf.h"
 
 namespace msvc { namespace test {
 

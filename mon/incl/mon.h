@@ -6,5 +6,6 @@
 #include "perf/perf.h"
 #include "log/log.h"
 #include "db/db.h"
+#include "cache/cache.h"
 
 #endif //MSVC_MON_EXPORT_H

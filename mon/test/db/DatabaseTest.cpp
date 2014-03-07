@@ -1,13 +1,13 @@
 #include <boost/test/unit_test.hpp>
-#include "DatabaseFixture.h"
 #include <boost/lambda/lambda.hpp>
+#include "incl/db/db.h"
 
 namespace msvc { namespace test {
 
 using namespace std;
 using namespace boost;
-using namespace boost::unit_test;
 using namespace boost::lambda;
+using namespace boost::unit_test;
 using namespace msvc::db;
 
 namespace {
@@ -48,7 +48,7 @@ void _database_test(const auto_ptr<Database> &db)
 }
 }
 
-BOOST_FIXTURE_TEST_SUITE(DatabaseTest, DatabaseFixture)
+BOOST_AUTO_TEST_SUITE(DatabaseTest)
 
 BOOST_AUTO_TEST_CASE(MySqlDbTest)
 {

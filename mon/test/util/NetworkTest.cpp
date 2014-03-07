@@ -1,5 +1,5 @@
 #include <boost/test/unit_test.hpp>
-#include "../../incl/util/util.h"
+#include "incl/util/util.h"
 
 namespace msvc { namespace test {
 

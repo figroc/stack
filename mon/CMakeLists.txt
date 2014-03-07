@@ -116,12 +116,17 @@ add_library(db_test OBJECT
   "test/db/DatabaseTest.cpp"
 )
 
+add_library(cache_test OBJECT
+  "test/cache/CacheTest.cpp"
+)
+
 add_executable(msvc_test 
   "test/TestSuite.cpp" 
   $<TARGET_OBJECTS:util_test> 
   $<TARGET_OBJECTS:conf_test>
   $<TARGET_OBJECTS:log_test>
   $<TARGET_OBJECTS:db_test>
+  $<TARGET_OBJECTS:cache_test>
 )
 
 target_link_libraries(msvc_test
