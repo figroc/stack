@@ -98,6 +98,7 @@ target_link_libraries(msvc
   boost_thread
   boost_date_time
   boost_program_options
+  boost_filesystem
   cppnetlib-uri
   cppnetlib-server-parsers
   mongoclient
