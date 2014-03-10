@@ -54,35 +54,38 @@ public:
 
 	inline static void Call(const redis_conn_ptr &conn, const std::string &cmd,	const std::vector<std::string> &args) {
 		int argc = 1 + args.size();
-		const char **argv = new const char *[argc]; size_t *argl = new size_t[argc];
+		boost::scoped_array<const char *> argv(new const char *[argc]); 
+		boost::scoped_array<size_t> argl(new size_t[argc]);
 		argv[0] = cmd.c_str(); argl[0] = cmd.size();
 		for (int i = 0; i < args.size(); ++i) {
 			argv[i + 1] = args[i].c_str(); argl[i + 1] = args[i].size();
 		}
-		redisAppendCommandArgv(conn.get(), argc, argv, argl);
+		redisAppendCommandArgv(conn.get(), argc, argv.get(), argl.get());
 	}
 
 	inline static void Call(const redis_conn_ptr &conn, const std::string &cmd,	const std::string &key, const std::vector<std::string> &args) {
 		int argc = 2 + args.size();
-		const char **argv = new const char *[argc]; size_t *argl = new size_t[argc];
+		boost::scoped_array<const char *> argv(new const char *[argc]); 
+		boost::scoped_array<size_t> argl(new size_t[argc]);
 		argv[0] = cmd.c_str(); argl[0] = cmd.size();
 		argv[1] = key.c_str(); argl[1] = key.size();
 		for (int i = 0; i < args.size(); ++i) {
 			argv[i + 2] = args[i].c_str(); argl[i + 2] = args[i].size();
 		}
-		redisAppendCommandArgv(conn.get(), argc, argv, argl);
+		redisAppendCommandArgv(conn.get(), argc, argv.get(), argl.get());
 	}
 
 	inline static void Call(const redis_conn_ptr &conn, const std::string &cmd, const std::map<std::string, std::string> &args) {
 		int argc = 1 + args.size() * 2;
-		const char **argv = new const char *[argc]; size_t *argl = new size_t[argc];
+		boost::scoped_array<const char *> argv(new const char *[argc]); 
+		boost::scoped_array<size_t> argl(new size_t[argc]);
 		int i = 0; argv[i] = cmd.c_str(); argl[i++] = cmd.size();
 		for (std::map<std::string, std::string>::const_iterator
 				it = args.begin(); it != args.end(); ++it) {
 			argv[i] = it->first.c_str(); argl[i++] = it->first.size();
 			argv[i] = it->second.c_str(); argl[i++] = it->second.size();
 		}
-		redisAppendCommandArgv(conn.get(), argc, argv, argl);
+		redisAppendCommandArgv(conn.get(), argc, argv.get(), argl.get());
 	}
 
 	inline static redis_reply_ptr Reply(const redis_conn_ptr &conn) {
@@ -93,7 +96,10 @@ public:
 
 private:
 	inline static redis_reply_ptr Reply(redisReply *reply) {
-		return redis_reply_ptr(reply, &freeReplyObject);
+		return redis_reply_ptr(reply, &_FreeReplyObject);
+	}
+	inline static void _FreeReplyObject(redisReply *reply) {
+		if (reply) freeReplyObject(reply);
 	}
 
 private:

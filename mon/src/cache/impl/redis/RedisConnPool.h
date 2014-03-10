@@ -60,6 +60,11 @@ public:
 	};
 
 private:
+	inline static void _FreeRedisContext(redis_conn_ptr::element_type *context) {
+		if (context) redisFree(context);
+	};
+
+private:
 	boost::mutex _lock;
 	redis_conn_map _conns;
 

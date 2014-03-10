@@ -103,7 +103,7 @@ BSONObj MongoDbHelper::BuildModify(const vector<ModifyOption> &modify, const Opr
 		map< string, shared_ptr<BSONObjBuilder> >::iterator
 			it = builder.find(op);
 		if (builder.end() == it) {
-			it = builder.insert(std::make_pair(op, new BSONObjBuilder(64))).first;
+			it = builder.insert(make_pair(op, make_shared<BSONObjBuilder>(64))).first;
 		}
 		BSON_VALUE(*it->second << modify[i].name(), modify[i].type(), param, index);
 	}

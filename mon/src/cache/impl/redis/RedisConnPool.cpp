@@ -32,7 +32,7 @@ auto_ptr<RedisConnPool::ScopedConnection> RedisConnPool::Fetch(const RedisUri &u
 	}
 
 	if (!conn.get()) {
-		redis_conn_ptr ptr(redisConnect(uri.addr().c_str(), uri.port()), &redisFree);
+		redis_conn_ptr ptr(redisConnect(uri.addr().c_str(), uri.port()), &_FreeRedisContext);
 		if (!ptr)
 			throw runtime_error(string("failed to connect to ") + uri.uri());
 
