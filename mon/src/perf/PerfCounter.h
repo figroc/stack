@@ -47,7 +47,7 @@ private:
 
 private:
 	PerfCounter(const std::string &name) : _name(name), _hint(HINT_NONE),
-		_current(0), _rateInc(), _rateDec(), _timing() { };
+		_current(), _rateInc(), _rateDec(), _timing(), _hit() { };
 public:
 	virtual ~PerfCounter() { };
 
