@@ -53,7 +53,7 @@ auto_ptr<DocTable> MySqlDbClient::Query(const string &table, const QuerySpec &qu
 
 void MySqlDbClient::Insert(const std::string &table, const DataSpec &data, const OprParam &param)
 {
-	PerfCounting(_client->perfR());
+	PerfCounting(_client->perfW());
 	PerfTiming(_client->perfW());
 
 	sql::PreparedStatement *stmt = _client->statement(data.version());
@@ -82,7 +82,7 @@ void MySqlDbClient::Insert(const std::string &table, const DataSpec &data, const
 
 void MySqlDbClient::Update(const std::string &table, const ModifySpec &modify, const OprParam &param)
 {
-	PerfCounting(_client->perfR());
+	PerfCounting(_client->perfW());
 	PerfTiming(_client->perfW());
 
 	sql::PreparedStatement *stmt = _client->statement(modify.version());
@@ -113,7 +113,7 @@ void MySqlDbClient::Update(const std::string &table, const ModifySpec &modify, c
 
 void MySqlDbClient::Remove(const std::string &table, const RemoveSpec &remove, const OprParam &param)
 {
-	PerfCounting(_client->perfR());
+	PerfCounting(_client->perfW());
 	PerfTiming(_client->perfW());
 
 	sql::PreparedStatement *stmt = _client->statement(remove.version());
