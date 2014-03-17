@@ -1,17 +1,15 @@
 #include "Uri.h"
-#include "incl/log/log.h"
 
 namespace msvc { namespace util {
 
 using namespace std;
-using namespace msvc::log;
 
 Uri::Uri(const string &uri) : _uri(uri), _opts()
 {
 	try {
 		_valid = ParseUriStr(uri);
 	} catch (const exception &ex) {
-		LC_TRACE_WARN("error parsing uri: %%", uri, ex);
+		cerr << "error parsing uri: " << uri << " !!! " << ex.what();
 	}
 	if (_valid) {
 		_identity.append(_scheme).append(":")
