@@ -10,9 +10,8 @@
 #include <boost/atomic.hpp>
 #include <boost/thread.hpp>
 #include <boost/circular_buffer.hpp>
-#include <boost/asio/buffer.hpp>
-#include <boost/asio/streambuf.hpp>
 
+#include "DataBuffer.h"
 #include "EventArgs.h"
 #include "incl/util/util.h"
 #include "incl/perf/perf.h"
@@ -49,7 +48,6 @@ private:
 	static std::string GetSockAddr(const int sock, const bool local);
 	static std::string ParseSockAddr(const struct sockaddr_storage &addr);
 	static struct sockaddr_storage ParseSockAddr(const std::string &endpoint);
-	static std::pair<std::string, std::string> ParseEndpoint(const std::string &endpoint);
 
 	// EINTR would not occur for non-blocking, should we treat it as error or just guard around it?
 	inline static bool RetryAccept(const int err) { return EINTR == err || ECONNABORTED == err || EPROTO == err; }
@@ -80,9 +78,6 @@ public:
 	virtual ~Socket();
 
 public:
-	typedef boost::shared_ptr<boost::asio::streambuf> DataBuffer;
-
-public:
 	inline bool IsBound() const { return -1 != _sock; }
 	inline std::string GetLocalEP() const { return _localEP; }
 	inline std::string GetRemoteEP() const { return _remoteEP; }
@@ -99,11 +94,11 @@ public:
 
 	typedef IoEventArgs<DataBuffer> RecvEventArgs;
 	typedef SafeFunctor<void (const boost::shared_ptr<Socket> &, RecvEventArgs, const StatePtr &)> FnRecvCallback;
-	bool RecvAsync(DataBuffer &data, const FnRecvCallback &callback, const StatePtr &state = StatePtr());
+	bool RecvAsync(const DataBuffer &data, const FnRecvCallback &callback, const StatePtr &state = StatePtr());
 
 	typedef IoEventArgs<DataBuffer> SendEventArgs;
 	typedef SafeFunctor<void (const boost::shared_ptr<Socket> &, RecvEventArgs, const StatePtr &)> FnSendCallback;
-	bool SendAsync(DataBuffer &data, const FnSendCallback &callback, const StatePtr &state = StatePtr());
+	bool SendAsync(const DataBuffer &data, const FnSendCallback &callback, const StatePtr &state = StatePtr());
 
 private:
 	boost::shared_ptr<Socket> CheckAlive(const bool callback);
@@ -119,14 +114,14 @@ private:
 	void ConnectCallback(const int err, const int sock, const std::string &remote, const CtxConnectCallback &ctx);
 
 	typedef CallbackContext<FnRecvCallback> CtxRecvCallback;
-	bool RecvAttempt(const bool user, DataBuffer &data, const CtxRecvCallback &ctx);
+	bool RecvAttempt(const bool user, const DataBuffer &data, const CtxRecvCallback &ctx);
 	void RecvReady(const bool event, const int sock, const StatePtr &state);
-	void RecvCallback(DataBuffer &data, const CtxRecvCallback &ctx);
+	void RecvCallback(const DataBuffer &data, const CtxRecvCallback &ctx);
 
 	typedef CallbackContext<FnSendCallback> CtxSendCallback;
-	bool SendAttempt(const bool user, DataBuffer &data, const CtxSendCallback &ctx);
+	bool SendAttempt(const bool user, const DataBuffer &data, const CtxSendCallback &ctx);
 	void SendReady(const bool event, const int sock, const StatePtr &state);
-	void SendCallback(DataBuffer &data, const CtxSendCallback &ctx);
+	void SendCallback(const DataBuffer &data, const CtxSendCallback &ctx);
 
 private:
 	boost::circular_buffer< std::pair<DataBuffer, CtxSendCallback> > _queue;

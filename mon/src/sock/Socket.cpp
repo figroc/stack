@@ -133,7 +133,7 @@ string Socket::GetSockAddr(const int sock, const bool local)
 	socklen_t len = sizeof(addr);
 	if (-1 == (local ? ::getsockname(sock, (struct sockaddr *)&addr, &len)
 		             : ::getpeername(sock, (struct sockaddr *)&addr, &len)))
-		return string("");
+		return string();
 	return ParseSockAddr(addr);
 }
 
@@ -145,11 +145,7 @@ string Socket::ParseSockAddr(const struct sockaddr_storage &addr)
 	if (0 == ::getnameinfo((struct sockaddr *)&addr, sizeof(addr),
 			host, sizeof(host), port, sizeof(port),
 			NI_NUMERICHOST | NI_NUMERICSERV)) {
-		name.append(host);
-		if (string::npos != name.find(":"))
-			name.insert(0, 1, '[').push_back(']');
-		name.push_back(':');
-		name.append(port);
+        name = ComposeEndpoint(host, port);
 	}
 	return name;
 }
@@ -188,25 +184,6 @@ struct sockaddr_storage Socket::ParseSockAddr(const string &endpoint)
 	::freeaddrinfo(host);
 	return addr;
 }
-
-pair<string, string> Socket::ParseEndpoint(const string &endpoint)
-{
-	pair<string, string> addr;
-	const int i = endpoint.rfind(':');
-	if (i == string::npos || i == 0 || i == endpoint.size() - 1)
-		return addr;
-
-	addr.first = endpoint.substr(0, i);
-	addr.second = endpoint.substr(i + 1);
-	if (addr.first[0] == '[') {
-		if (addr.first[addr.first.size() - 1] != ']')
-			return addr;
-		addr.first.erase(0, 1);
-		addr.first.erase(addr.first.size() - 1);
-	}
-	return addr;
-}
-
 
 Socket::Socket() : _ref(),
 		_localEP(), _remoteEP(), _sock(-1),
@@ -406,7 +383,7 @@ void Socket::ConnectCallback(const int err, const int sock, const string &remote
 	}
 }
 
-bool Socket::RecvAsync(DataBuffer &data, const FnRecvCallback &callback, const StatePtr &state)
+bool Socket::RecvAsync(const DataBuffer &data, const FnRecvCallback &callback, const StatePtr &state)
 {
 	if (-1 == _sock)
 		throw logic_error("socket not bound yet");
@@ -417,7 +394,7 @@ bool Socket::RecvAsync(DataBuffer &data, const FnRecvCallback &callback, const S
 	return RecvAttempt(true, data, CtxRecvCallback(callback, state));
 }
 
-bool Socket::RecvAttempt(const bool user, DataBuffer &data, const CtxRecvCallback &ctx)
+bool Socket::RecvAttempt(const bool user, const DataBuffer &data, const CtxRecvCallback &ctx)
 {
 	int size(0), err(-1);
 	do {
@@ -460,7 +437,7 @@ void Socket::RecvReady(const bool event, const int sock, const StatePtr &state)
 	}
 }
 
-void Socket::RecvCallback(DataBuffer &data, const CtxRecvCallback &ctx)
+void Socket::RecvCallback(const DataBuffer &data, const CtxRecvCallback &ctx)
 {
 	_recving.store(false, memory_order_relaxed);
 
@@ -472,7 +449,7 @@ void Socket::RecvCallback(DataBuffer &data, const CtxRecvCallback &ctx)
 	}
 }
 
-bool Socket::SendAsync(DataBuffer &data, const FnSendCallback &callback, const StatePtr &state)
+bool Socket::SendAsync(const DataBuffer &data, const FnSendCallback &callback, const StatePtr &state)
 {
 	if (-1 == _sock)
 		throw logic_error("socket not bound yet");
@@ -493,7 +470,7 @@ bool Socket::SendAsync(DataBuffer &data, const FnSendCallback &callback, const S
 	return attempt ? SendAttempt(true, data, CtxSendCallback(callback, state)) : false;
 }
 
-bool Socket::SendAttempt(const bool user, DataBuffer &data, const CtxSendCallback &ctx)
+bool Socket::SendAttempt(const bool user, const DataBuffer &data, const CtxSendCallback &ctx)
 {
 	int size(0), err(-1);
 	DataBuffer::element_type::const_buffers_type buf = data->data();
@@ -536,7 +513,7 @@ void Socket::SendReady(const bool event, const int sock, const StatePtr &state)
 	}
 }
 
-void Socket::SendCallback(DataBuffer &data, const CtxSendCallback &ctx)
+void Socket::SendCallback(const DataBuffer &data, const CtxSendCallback &ctx)
 {
 	if (ctx.callback().callable()) try {
 		ctx.callback()(_ref.lock(), SendEventArgs(data), ctx.state());
