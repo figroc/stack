@@ -1,7 +1,7 @@
 #ifndef MSVC_RPC_RPC_CONNECTION_H
 #define MSVC_RPC_RPC_CONNECTION_H
 
-#include "../../socket/Socket.h"
+#include "../../sock/DataBuffer.h"
 #include "../message/RpcRequest.h"
 #include "../message/RpcResponse.h"
 #include "../parser/Parser.h"
@@ -11,7 +11,7 @@
 
 namespace msvc { namespace rpc { namespace _di {
 
-using namespace msvc::stack;
+using namespace msvc::sock;
 
 class RpcConnection {
 public:
@@ -28,7 +28,7 @@ public:
 	void Listen(const std::string &local);
 	void Connect(const std::string &remote);
 	void BeginRecieve();
-	void Send(const BufferNode &data);
+	void Send(const DataBuffer &data);
 };
 
 }}}

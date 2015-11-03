@@ -6,6 +6,12 @@
 namespace msvc { namespace rpc {
 
 class RpcResponse : public RpcMessage {
+private:
+    int _status;
+    
+public:
+    RpcResponse(): RpcMessage(), _status() { };
+    
 public:
 	int &status();
 	const int &status() const;

@@ -1,46 +1,52 @@
 #ifndef MSVC_RPC_RPC_MESSAGE_H
 #define MSVC_RPC_RPC_MESSAGE_H
 
-#include "../socket/BufferNode.h"
+#include "../sock/DataBuffer.h"
 #include <string>
 #include <boost/uuid/uuid.hpp>
 
 namespace msvc { namespace rpc {
 
-using namespace msvc::stack;
+using namespace msvc::sock;
 
 class RpcMessage {
+private:
+    boost::uuids::uuid _id;
+    std::string _source;
+    std::string _from;
+    std::string _to;
+    std::string _scope;
+    std::string _action;
+    DataBuffer _body;
+    
 protected:
-	RpcMessage();
+	RpcMessage() : _id(), _source(), _from(), _to(), _scope(), _action(),
+        _body(new DataBuffer::element_type()) { };
 public:
-	virtual ~RpcMessage();
+	virtual ~RpcMessage() { };
 
 public:
-	boost::uuids::uuid &id();
-	const boost::uuids::uuid &id() const;
+	inline boost::uuids::uuid &id() { return _id; };
+	inline const boost::uuids::uuid &id() const { return _id; };
 
-	std::string &source();
-	const std::string &source() const;
+	inline std::string &source() { return _source; };
+	inline const std::string &source() const { return _source; };
 
-	std::string &from();
-	const std::string &from() const;
+	inline std::string &from() { return _from; };
+	inline const std::string &from() const { return _from; };
 
-	std::string &to();
-	const std::string &to() const;
+	inline std::string &to() { return _to; };
+	inline const std::string &to() const { return _to; };
 
-	std::string &scope();
-	const std::string &scope() const;
+	inline std::string &scope() { return _scope; };
+	inline const std::string &scope() const { return _scope; };
 
-	std::string &action();
-	const std::string &action() const;
+	inline std::string &action() { return _action; };
+	inline const std::string &action() const { return _action; };
 
-	BufferNode &body();
-	const BufferNode &body() const;
+	inline DataBuffer &body() { return _body; };
+	inline const DataBuffer &body() const { return _body; };
 
-protected:
-	virtual BufferNode SerializeHeader() const = 0;
-public:
-	BufferNode Serialize() const;
 };
 
 }}
